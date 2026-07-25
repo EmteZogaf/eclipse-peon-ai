@@ -34,6 +34,8 @@ import org.eclipse.ui.IWorkingSet;
 import org.sterl.llmpeon.StandingOrdersBuilder;
 import org.sterl.llmpeon.agent.AiAgent;
 import org.sterl.llmpeon.ai.LlmConfig;
+import org.sterl.llmpeon.command.SlashCommandResolver;
+import org.sterl.llmpeon.command.SlashCommandResolver.SlashResult;
 import org.sterl.llmpeon.parts.config.LlmPreferenceInitializer;
 import org.sterl.llmpeon.parts.config.McpPreferenceInitializer;
 import org.sterl.llmpeon.parts.config.VoicePreferenceInitializer;
@@ -605,6 +607,11 @@ public class AIChatView implements EclipseAiMonitor {
         }).schedule();
     }
 
+    private sealed interface SendDecision {
+        record Skip() implements SendDecision {}
+        record Submit(String messageOrNull) implements SendDecision {}
+    }
+
     private void doSendMessage() {
         if (StringUtil.hasNoValue(aiService.getActiveModel())) {
             chatHistory.appendMessage(new SimpleMessage(Type.PROBLEM, "No model configured — open Window > Preferences > Peon AI"));
@@ -612,24 +619,51 @@ public class AIChatView implements EclipseAiMonitor {
         }
 
         var active = aiService.getActiveAgent();
-
         final var text = StringUtil.strip(chatInput.getText().trim());
         if (StringUtil.hasNoValue(text) && active.getMemory().size() == 0) return;
 
+        String messageToSend = null;
+
         if (StringUtil.hasValue(text)) {
-            applySlashCommandIfPresent();
-            chatHistory.appendMessage(new SimpleMessage(Type.USER, text));
-            chatInput.clearText();
-            
-            // already working -> we only append the current history ...
-            if (actionsBar.isWorking()) {
-                active.getMemory().add(UserMessage.from(text));
-                return;
-            }
-        } else if (actionsBar.isWorking()) { // no text and already working ...
+            var decision = resolveOutgoingMessage(text, active);
+            if (decision instanceof SendDecision.Skip) return;
+            messageToSend = ((SendDecision.Submit) decision).messageOrNull();
+        } else if (actionsBar.isWorking()) {
             return;
         }
 
+        submitAiJob(active, messageToSend);
+    }
+
+    private SendDecision resolveOutgoingMessage(String text, AiAgent active) {
+        var resolver = new SlashCommandResolver();
+        var result = resolver.resolve(text, aiService.getCommandService(), aiService.getSkillService());
+
+        String trailing;
+        if (result.isPresent()) {
+            SlashResult r = result.get();
+            standingOrders.addOneTimeOrder(r.body());
+            chatHistory.appendMessage(new SimpleMessage(Type.TOOL,
+                    r.isSkill() ? "Using 📦: " + r.name() : "Using 🪄: " + r.name()));
+            trailing = StringUtil.hasValue(r.trailingText()) ? r.trailingText() : null;
+            if (trailing != null) {
+                chatHistory.appendMessage(new SimpleMessage(Type.USER, trailing));
+            }
+            chatInput.dismissSlashMenu();
+        } else {
+            trailing = text;
+            chatHistory.appendMessage(new SimpleMessage(Type.USER, text));
+        }
+        chatInput.clearText();
+
+        if (actionsBar.isWorking()) {
+            if (trailing != null) active.getMemory().add(UserMessage.from(trailing));
+            return new SendDecision.Skip();
+        }
+        return new SendDecision.Submit(trailing);
+    }
+
+    private void submitAiJob(AiAgent active, String messageToSend) {
         lockWhileWorking(true);
         Job.create("Peon AI request", monitor -> {
             monitor.beginTask("Arbeit, Arbeit!", 100);
@@ -638,7 +672,7 @@ public class AIChatView implements EclipseAiMonitor {
             ChatResponse cr = null;
             try {
                 active.setUserContextInformations(this.standingOrders.build());
-                cr = active.call(text.isEmpty() ? null : text, this);
+                cr = active.call(messageToSend, this);
             } catch (Exception e) {
                 ex = handleChatException(e);
             } finally {
@@ -738,46 +772,6 @@ public class AIChatView implements EclipseAiMonitor {
             aiService.getSkillService().setSkillEnabled(selection.skillName, selection.enabled);
         }
         EclipseUtil.runInUiThread(parent, this::refreshStatusLine);
-    }
-
-    /**
-     * If the chat input starts with {@code /name}, looks up the command (or skill) and adds its body
-     * as a one-time standing order, so it is prepended to the message and re-injected if the session
-     * is compacted mid-task. The slash token is stripped so only the trailing user text is sent.
-     * Reports a problem when the name is unknown so the caller can abort the send.
-     */
-    private void applySlashCommandIfPresent() {
-        var raw = chatInput.getText();
-        if (raw == null) return;
-        var trimmed = raw.stripLeading();
-        if (!trimmed.startsWith("/")) return;
-
-        int wsIdx = -1;
-        for (int i = 1; i < trimmed.length(); i++) {
-            if (Character.isWhitespace(trimmed.charAt(i))) { wsIdx = i; break; }
-        }
-        var name = wsIdx < 0 ? trimmed.substring(1) : trimmed.substring(1, wsIdx);
-        if (name.isBlank()) return;
-
-        var commandService = aiService.getCommandService();
-        var command = commandService.get(name);
-        if (command.isPresent()) {
-            standingOrders.addOneTimeOrder(command.get().getBody());
-        } else {
-            var skillService = aiService.getSkillService();
-            var skill = skillService.get(name);
-            if (skill.isPresent()) {
-                standingOrders.addOneTimeOrder(skill.get().getBody() + "\n\nExecute this skill on the following instruction - full body was loaded.");
-            } else {
-                if (!commandService.hasCommands() && !skillService.hasSkills()) return;
-                var available = commandService.commandNames() + ", " + skillService.skillNames();
-                chatHistory.appendMessage(new SimpleMessage(Type.PROBLEM,
-                        "Unknown command or SKILL /" + name + ". Available " + available));
-                
-                return;
-            }
-        }
-        chatInput.dismissSlashMenu();
     }
 
     private void onMicClick() {
