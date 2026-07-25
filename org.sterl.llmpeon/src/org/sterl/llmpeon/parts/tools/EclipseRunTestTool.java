@@ -236,21 +236,17 @@ public class EclipseRunTestTool extends AbstractEclipseTool {
      * Filters out events from concurrent test runs (e.g. user manually running
      * tests while the LLM's run is in progress).
      *
-     * ITestRunSession lacks getLaunch(), so we match by project + config name.
-     * This is good enough for the edge case — same-project concurrent runs are
-     * extremely unlikely in practice.
+     * ITestRunSession lacks getLaunch(), so we match by project only.
+     * Name matching was dropped because JUnit 5 runners may decorate the display
+     * name, causing mismatches with the config name. Project matching is reliable
+     * — same-project concurrent runs are extremely unlikely in practice.
      */
     private static boolean isOurSession(ITestRunSession session, ILaunchConfiguration ourConfig) {
         try {
-            // Match by project
             var project = session.getLaunchedProject();
             if (project == null) return true; // can't determine, accept
             String cProject = ourConfig.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
-            if (!project.getElementName().equals(cProject)) return false;
-
-            // Match by config name (launch configs have unique names via generateLaunchConfigurationName)
-            String cName = ourConfig.getName();
-            return cName.equals(session.getTestRunName());
+            return project.getElementName().equals(cProject);
         } catch (CoreException e) {
             // If we can't determine the session's identity, accept it —
             // better to count extra events than miss our own.
