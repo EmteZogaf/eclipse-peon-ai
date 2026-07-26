@@ -92,7 +92,7 @@ public class AIChatView implements EclipseAiMonitor {
 
     private final AtomicReference<IProgressMonitor> monitorRef = new AtomicReference<>(new NullProgressMonitor());
     private final VoiceInputService voiceService = new VoiceInputService();
-    
+
     private volatile boolean recording = false;
 
     private HeaderBarWidget headerBar;
@@ -108,6 +108,7 @@ public class AIChatView implements EclipseAiMonitor {
     private final UserContext userContext = new UserContext();
 
     private final IPreferenceChangeListener prefListener = event -> {
+        System.err.println("IPreferenceChangeListener ...");
         EclipseUtil.runInUiThread(parent, this::applyConfig);
     };
     
@@ -316,10 +317,7 @@ public class AIChatView implements EclipseAiMonitor {
 
     @Override
     public void onCallCompleted(dev.langchain4j.model.chat.response.ChatResponse response, Duration duration) {
-        EclipseUtil.runInUiThread(parent, () -> {
-            lockWhileWorking(false);
-            refreshStatusLine();
-        });
+        EclipseUtil.runInUiThread(parent, this::refreshStatusLine);
     }
 
     @Override
@@ -398,21 +396,20 @@ public class AIChatView implements EclipseAiMonitor {
     private void applyConfig() {
         var config = LlmPreferenceInitializer.buildWithDefaults();
         EclipseSlf4jLogger.setDebug(config.isDebugMode());
-
+        LOG.info("Set new config " + config);
+        // ensure we set the voice config as we break later ...
+        chatInput.setVoiceInputVisible(VoicePreferenceInitializer.buildWithDefaults().enabled());
         if (lastAppliedConfig != null && lastAppliedConfig.equals(config)) return;
         lastAppliedConfig = config;
-        LOG.info("Set new config " + config);
         aiService.updateConfig(config);
-        EclipseUtil.runInUiThread(parent, () -> {
-            actionsBar.setAgents(aiService.getAgents());
-            actionsBar.updateModeUI(aiService.getActiveAgent());
-        });
-        
+
+        actionsBar.setAgents(aiService.getAgents());
+        actionsBar.updateModeUI(aiService.getActiveAgent());
+
         // Sync the Think toggle to the selected agent's state (Dev/Plan from prefs, Custom from
         // its AGENT.md). The brain button persists per agent; there is no cascade.
         actionsBar.setThinkEnabled(aiService.getActiveAgent().isThinkEnabled());
         applyMcpConfig();
-        chatInput.setVoiceInputVisible(VoicePreferenceInitializer.buildWithDefaults().enabled());
         syncAgentsMdToggle();
         refreshStatusLine();
         reloadModelsIfNeeded();
@@ -601,7 +598,7 @@ public class AIChatView implements EclipseAiMonitor {
             } catch (Exception e) {
                 ex = handleChatException(e);
             } finally {
-                handleDoneChatResponse(cr, monitor);
+                handleDoneChatResponse(cr, monitor, ex);
             }
             return PeonConstants.status("Compressed", ex);
         }).schedule();
@@ -628,7 +625,7 @@ public class AIChatView implements EclipseAiMonitor {
             var decision = resolveOutgoingMessage(text, active);
             if (decision instanceof SendDecision.Skip) return;
             messageToSend = ((SendDecision.Submit) decision).messageOrNull();
-        } else if (actionsBar.isWorking()) {
+        } else if (active.isWorking()) {
             return;
         }
 
@@ -656,8 +653,14 @@ public class AIChatView implements EclipseAiMonitor {
         }
         chatInput.clearText();
 
-        if (actionsBar.isWorking()) {
-            if (trailing != null) active.getMemory().add(UserMessage.from(trailing));
+        if (active.isWorking()) {
+            if (trailing != null) {
+                boolean isNewEntry = active.queueMessage(trailing); // delegates to agent's queue
+                if (isNewEntry) {
+                    chatHistory.appendMessage(new SimpleMessage(Type.AI,
+                            "Noted, I will respond as soon as I finished..."));
+                }
+            }
             return new SendDecision.Skip();
         }
         return new SendDecision.Submit(trailing);
@@ -676,20 +679,33 @@ public class AIChatView implements EclipseAiMonitor {
             } catch (Exception e) {
                 ex = handleChatException(e);
             } finally {
-                handleDoneChatResponse(cr, monitor);
+                handleDoneChatResponse(cr, monitor, ex);
             }
             return PeonConstants.status("Peon AI\n" + aiService.getConfig(), ex);
         }).schedule();
     }
 
-    private void handleDoneChatResponse(ChatResponse cr,
-            IProgressMonitor monitor) {
+    private void handleDoneChatResponse(ChatResponse cr, IProgressMonitor monitor, Exception ex) {
+        boolean wasCanceled = monitor.isCanceled(); // Capture BEFORE resetting monitorRef (async-state-safety)
         if (aiService.getConfig().isDebugMode()) {
             LOG.info("Chatreponse: " + (cr == null ? "null" : cr.aiMessage()));
         }
         monitor.done();
         monitorRef.set(new NullProgressMonitor());
-        EclipseUtil.runInUiThread(parent, () -> lockWhileWorking(false));
+        EclipseUtil.runInUiThread(parent, () -> {
+            // Internal chaining in core handles success paths — only drain remaining queue on abort/error
+            if (ex != null || wasCanceled) {
+                var active = aiService.getActiveAgent();
+                int preservedCount = active.getQueuedMessageCount();
+                String combined = active.drainQueue();
+                if (combined != null) {
+                    active.getMemory().add(UserMessage.from(combined));
+                    chatHistory.appendMessage(new SimpleMessage(Type.TOOL,
+                            preservedCount + " queued message(s) preserved for your next request."));
+                }
+            }
+            lockWhileWorking(false);
+        });
     }
     
     private Exception handleChatException(Exception e) {
@@ -727,7 +743,7 @@ public class AIChatView implements EclipseAiMonitor {
     private void lockWhileWorking(boolean value) {
         if (parent == null || parent.isDisposed()) return;
         actionsBar.lockWhileWorking(value);
-        chatInput.setWorking(value);
+        chatInput.setStopButtonVisible(value);
         if (!value) chatHistory.hideLiveStatus();
         if (!value && questionWidget != null && questionWidget.isVisible()) {
             questionWidget.cancel();
@@ -736,7 +752,7 @@ public class AIChatView implements EclipseAiMonitor {
 
     private void showQuestion(String question, java.util.List<String> answers,
             java.util.function.Consumer<String> onAnswer) {
-        chatHistory.updateLiveResponseInUIThread("Wating for User...", 0, null);
+        chatHistory.updateLiveResponseInUIThread("Waiting for user answer...", 0, null);
         EclipseUtil.runInUiThread(parent, () -> {
             ((GridData) chatInput.getLayoutData()).exclude = true;
             chatInput.setVisible(false);
@@ -759,6 +775,8 @@ public class AIChatView implements EclipseAiMonitor {
         questionWidget.hideQuestion();
         inputBlock.layout(true, true);
         inputBlock.getParent().layout(new Control[]{ inputBlock });
+        // Restore live status — work is still in progress while user answered.
+        chatHistory.updateLiveResponseInUIThread("waiting for AI...", 0, null);
     }
 
     private void onSkillsToggle(boolean enabled) {

@@ -14,6 +14,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Label;
 import org.sterl.llmpeon.parts.shared.ImageUtil;
 import org.sterl.llmpeon.parts.shared.SwtUtil;
 import org.sterl.llmpeon.prompt.model.SimplePromptFile;
@@ -32,11 +33,12 @@ public class UserInputWidget extends Composite {
     private final Composite rightColumn;
     private final Button sendButton;
     private Button micButton;   // null until voice is configured
+    private final Button stopButton;
 
     private final Image micImage;
     private final Image sendImage;  // shared registry — must NOT be disposed
     private final Image stopImage;
-    private volatile boolean working = false;
+    private final Runnable onStop;
     private final Runnable onMicClick;
 
     private final Color colorRecording;
@@ -44,8 +46,9 @@ public class UserInputWidget extends Composite {
     private SlashMenuPopup slashPopup;
     private Supplier<List<SimplePromptFile>> commandSupplier;
 
-    public UserInputWidget(Composite parent, int style, Runnable onSend, Runnable onStop, Runnable onMicClick) {
+    public UserInputWidget(Composite parent, int style, Runnable onSend, Runnable stopHandler, Runnable onMicClick) {
         super(parent, style);
+        this.onStop = stopHandler;
         this.onMicClick = onMicClick;
 
         colorRecording = new Color(200, 0, 0);
@@ -127,7 +130,7 @@ public class UserInputWidget extends Composite {
             }
         });
 
-        // Right icon column — mic on top (optional), send/stop at bottom
+        // Right icon column — mic (top), spacer (fill), send (bottom). Stop sits between them.
         rightColumn = new Composite(textRow, SWT.NONE);
         GridLayout rcLayout = new GridLayout(1, false);
         rcLayout.marginWidth = 0;
@@ -142,12 +145,20 @@ public class UserInputWidget extends Composite {
             e.gc.fillRectangle(rightColumn.getClientArea());
         });
 
+        // Mic button — created lazily by setVoiceInputVisible(), disposed when hidden.
+
+        // Stop button — hidden initially, shown when working (sits at top above filler)
+        stopButton = SwtUtil.createIconButton(rightColumn, stopImage, "Stop current request");
+        stopButton.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, false));
+        stopButton.setVisible(false);
+        stopButton.addListener(SWT.Selection, e -> onStop.run());
+
+        // Filler — expands vertically to push send to the bottom
+        new Label(rightColumn, SWT.NONE).setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
+
         sendButton = SwtUtil.createIconButton(rightColumn, sendImage, "Send (Ctrl+Enter)");
-        sendButton.setLayoutData(new GridData(SWT.CENTER, SWT.BOTTOM, false, true));
-        sendButton.addListener(SWT.Selection, e -> {
-            if (working) onStop.run();
-            else onSend.run();
-        });
+        sendButton.setLayoutData(new GridData(SWT.CENTER, SWT.BOTTOM, false, false));
+        sendButton.addListener(SWT.Selection, e -> onSend.run());
     }
 
     private void requestReflow() {
@@ -176,24 +187,22 @@ public class UserInputWidget extends Composite {
         textInput.setText(text);
     }
 
-    /** Show or hide the mic button. Created on first show, disposed on hide so the slot is truly empty. */
+    /** Show or hide the mic button. Created on show, disposed on hide so it takes zero space when gone. */
     public void setVoiceInputVisible(boolean visible) {
+        System.err.println("setVoiceInputVisible->" + visible);
+
         if (visible && (micButton == null || micButton.isDisposed())) {
-            micButton = SwtUtil.createIconButton(rightColumn,
-                    micImage,
-                    "Click to start recording — click again to stop and transcribe");
-            // Place mic before sendButton and sit at the top
-            micButton.moveAbove(sendButton);
+            micButton = SwtUtil.createIconButton(rightColumn, micImage, "Click to start recording");
             micButton.setLayoutData(new GridData(SWT.CENTER, SWT.TOP, false, false));
+            // Insert at the very top of the column (before stop button)
+            micButton.moveAbove(stopButton);
             micButton.addListener(SWT.Selection, e -> onMicClick.run());
-            rightColumn.layout(true, true);
-            requestReflow();
         } else if (!visible && micButton != null && !micButton.isDisposed()) {
             micButton.dispose();
             micButton = null;
-            rightColumn.layout(true, true);
-            requestReflow();
         }
+        rightColumn.layout(true, true);
+        requestReflow();
     }
 
     public void setRecording(boolean recording) {
@@ -206,17 +215,10 @@ public class UserInputWidget extends Composite {
         }
     }
 
-    /** Switch the Send/Stop button between idle and working state. */
-    public void setWorking(boolean working) {
-        this.working = working;
-        if (working) {
-            sendButton.setImage(stopImage);
-            sendButton.setToolTipText("Cancel current request");
-        } else {
-            sendButton.setImage(sendImage);
-            sendButton.setToolTipText("Send (Ctrl+Enter)");
-        }
-        sendButton.redraw();
+    /** Show/hide the Stop button; Send and Mic remain always functional. */
+    public void setStopButtonVisible(boolean visible) {
+        stopButton.setVisible(visible);
+        rightColumn.layout(true, true);
     }
 
     @Override
