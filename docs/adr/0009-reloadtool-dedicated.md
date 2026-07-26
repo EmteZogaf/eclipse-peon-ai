@@ -1,6 +1,6 @@
 # ADR-0009: ReloadTool as Dedicated Service Tool
 
-**Status:** Accepted
+**Status** · Accepted
 
 ## Context
 The scaffold agent needs to trigger service refreshes after creating/editing artifacts.

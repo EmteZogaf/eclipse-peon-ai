@@ -1,6 +1,6 @@
 # ADR 0001 — Think is resolved to a per-agent String, not a global enum
 
-**Status:** Accepted
+**Status** · Accepted
 
 **Context:** Providers define "think" differently: Ollama/Anthropic are boolean-ish (`think`,
 thinking type), OpenAI takes a string effort (`reasoning.effort=high`), LM Studio a custom

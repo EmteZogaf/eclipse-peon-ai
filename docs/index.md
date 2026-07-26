@@ -11,6 +11,9 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 * [Custom Agents](custom-agents-design.md) - user-defined `AGENT.md` agents with tool allowlists, read-only mode and per-agent model.
 * [Interaction Design](interaction-design.md) - the chat view layout: history, input block, action bar and status line.
 * [Plan & Dev Agent](plan-dev-agent-design.md) - the two-phase plan→dev handoff model and its planned pipeline features.
+* [Model Loading](model-loading.md) - model list lifecycle: lazy fetch, persistence across agent switches, fallback on failure.
+* [Per-Agent Think Toggle](per-agent-think.md) - per-request think resolution via provider mapping files and AGENT.md frontmatter.
+* [Queued User Messages](queued-user-messages.md) - input queue with batching, FIFO consumption, drain-to-memory on abort.
 * [Session Token Usage](token-usage.md) - cumulative ↑/↓ token spend in the header, fed from the StreamingBridge choke point.
 * [Scaffold Agent](scaffold-agent.md) - built-in agent for creating/editing Peon config artifacts (agents, skills, commands) with config-scoped disk tools.
 * [Standing Orders](standing-orders-design.md) - context lines (project, AGENTS.md, active command/skill) that survive mid-loop compaction.

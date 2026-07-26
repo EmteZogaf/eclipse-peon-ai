@@ -1,6 +1,6 @@
 # ADR 0006 — SWT: reflow the parent chain when a control's content changes size
 
-**Status:** Accepted
+**Status** · Accepted
 
 **Context:** A **recurring, non-obvious bug** (hit at least four times): after changing a control's
 text / image / visibility at runtime in a way that alters its **preferred size**, calling

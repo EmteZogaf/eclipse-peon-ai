@@ -1,6 +1,6 @@
 # ADR-0007: Scaffold Agent as Built-in Java Class with Own ToolService
 
-**Status:** Accepted
+**Status** · Accepted
 
 ## Context
 Custom YAML agents cannot have programmatic tools injected or special standing orders. The scaffold agent needs config-scoped disk tools that are independent of the global disk-tools-enabled setting.

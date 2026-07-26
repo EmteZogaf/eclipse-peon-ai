@@ -1,6 +1,6 @@
 # ADR 0003 — `think_send` is independent of the think toggle (and stays global)
 
-**Status:** Accepted
+**Status** · Accepted
 
 **Context:** Some models (Qwen, Mistral, DeepSeek) emit reasoning even when we send no think
 attribute, and require that reasoning to be **returned** and **resent** on the next turn or the call

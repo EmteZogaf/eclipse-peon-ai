@@ -1,6 +1,6 @@
 # ADR 0004 — Session token accounting at the StreamingBridge choke point
 
-**Status:** Accepted
+**Status** · Accepted
 
 **Context:** [Session Token Usage](../token-usage.md) needs a cumulative, cross-agent, never-reset
 token counter that includes the main tool loop, the search sub-agent and every compaction. These are

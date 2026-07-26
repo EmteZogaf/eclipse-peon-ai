@@ -12,7 +12,7 @@ The scaffold agent is a built-in agent appearing alongside Peon-Dev and Peon-Pla
 - Name: `Peon-Scaffold`
 - Package: `org.sterl.llmpeon.scaffold`
 - Class: `AiScaffoldAgent extends AbstractAgent`
-- Registered as a persistent agent — survives `clearAgents()` on reload
+- Registered as a persistent agent via `addPersistentAgent()` — stored in AgentService's separate `persistentAgents` map, survives `clearAgents()` on reload
 
 **BDD:**
 ```
@@ -26,7 +26,7 @@ THEN Peon-Scaffold is still in the agents map
 ```
 
 ### R2: Tool Access ✅
-The scaffold agent has its own `ToolService(false)` with exactly:
+The scaffold agent uses `ToolService(false)` constructor to start with an empty registry — prevents default-tool leakage into scaffold agent. The no-arg constructor delegates to `this(true)`. It has exactly:
 - Config-scoped `DiskFileReadTool`, `DiskFileWriteTool`, `DiskGrepTool` (workingDir = config.getConfigDir())
 - `SkillTool` (shared instance)
 - `WebFetchTool`
@@ -120,6 +120,4 @@ The scaffold agent uses `devAgentConfig()` — same model, temperature, think as
 - [ADR-0009](adr/0009-reloadtool-dedicated.md) — ReloadTool as dedicated service tool
 - [ADR-0010](adr/0010-standing-orders-setactiveagent-hook.md) — Standing orders via PeonAiService hook
 - [ADR-0011](adr/0011-agent-template-system-prompt.md) — Agent template as system prompt resource
-- [ADR-0012](adr/0012-toolservice-boolean-constructor.md) — ToolService(boolean withDefaults) constructor
-- [ADR-0013](adr/0013-persistent-agents.md) — Persistent agents in AgentService
 - [ADR-0014](adr/0014-system-line-separator-in-llm-strings.md) — System.lineSeparator() in LLM strings

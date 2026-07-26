@@ -1,6 +1,6 @@
 # ADR 0002 — The provider/model think mapping lives in resource files, not code
 
-**Status:** Accepted
+**Status** · Accepted
 
 **Context:** In auto mode Peon must translate a generic "on" into the right value for the concrete
 provider **and** model (OpenAI reasoning models → `high`; Opus → `adaptive`; other Claude → `enabled`;

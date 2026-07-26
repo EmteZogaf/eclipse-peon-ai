@@ -1,6 +1,6 @@
 # ADR 0005 — Widgets own their state; AIChatView only routes monitor events
 
-**Status:** Accepted
+**Status** · Accepted
 
 **Context:** The first cut of [Session Token Usage](../token-usage.md) built the header strip, the
 tools-menu popup logic, *and* held the cumulative session `TokenStats` directly inside

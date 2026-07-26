@@ -1,6 +1,6 @@
 # ADR-0010: Standing Orders via PeonAiService setActiveAgent Hook
 
-**Status:** Accepted
+**Status** · Accepted
 
 ## Context
 StandingOrdersBuilder is shared across all agents; scaffold agent needs special context injection on activation.

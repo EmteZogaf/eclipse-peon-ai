@@ -1,6 +1,6 @@
 # ADR-0008: AiAgent.getToolService() Routing
 
-**Status:** Accepted
+**Status** · Accepted
 
 ## Context
 `PeonAiService.getToolService()` is used by `AIChatView` (AskUserTool, ShellTool config) and `getToolStatus()`. With per-agent ToolService, these need to route to the active agent's tool service.

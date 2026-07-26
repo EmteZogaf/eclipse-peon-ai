@@ -1,6 +1,6 @@
 # ADR-0011: Agent Template as System Prompt Resource
 
-**Status:** Accepted
+**Status** · Accepted
 
 ## Context
 The scaffold agent needs guidance on how to create AGENT.md, SKILL.md, and command files — including frontmatter structure, naming conventions, and file placement.
