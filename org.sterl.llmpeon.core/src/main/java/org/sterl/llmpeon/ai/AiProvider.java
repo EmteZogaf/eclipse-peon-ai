@@ -554,7 +554,7 @@ public enum AiProvider {
         try {
             return AiProvider.valueOf(string);
         } catch (Exception e) {
-            System.err.println("AiProvider: unknown " + string + " using " + OLLAMA);
+            log.warn("AiProvider: unknown " + string + " using " + OLLAMA);
             return OLLAMA;
         }
     }

@@ -62,6 +62,7 @@ public class TextInputWidget extends Composite {
 
         popupMenu = new Menu(parent.getShell(), SWT.POP_UP);
         addUndoRedoSupport(popupMenu);
+
     }
 
     private void refreshHeight() {
@@ -75,7 +76,6 @@ public class TextInputWidget extends Composite {
         int maxHeight = lineH * maxRows;
         int newHint = Math.max(minHeight, Math.min(maxHeight, size.y));
         if (gd.heightHint != newHint) {
-            System.err.println("newHint: " + newHint);
             gd.heightHint = newHint;
             onReflow.run();
         }
