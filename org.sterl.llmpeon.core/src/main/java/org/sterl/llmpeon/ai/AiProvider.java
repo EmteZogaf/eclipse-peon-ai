@@ -91,11 +91,16 @@ public enum AiProvider {
     OPEN_AI {
         @Override
         StreamingChatModel buildModel(LlmConfig c) {
+            var http1 = JdkHttpClient.builder()
+                    .httpClientBuilder(HttpClient.newBuilder()
+                            .version(HttpClient.Version.HTTP_1_1));
+            
             var builder = OpenAiStreamingChatModel.builder()
                     .timeout(c.getTimeout())
                     .baseUrl(c.getUrl())
                     .modelName(c.getModel())
                     .apiKey(c.getApiKey())
+                    .httpClientBuilder(http1)
                     .strictJsonSchema(true)
                     .returnThinking(c.shouldReturnThinking())
                     .sendThinking(c.shouldWeSendThinkingBackToLLM())

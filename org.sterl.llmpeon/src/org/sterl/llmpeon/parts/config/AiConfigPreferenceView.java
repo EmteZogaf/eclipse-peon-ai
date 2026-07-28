@@ -35,8 +35,9 @@ public class AiConfigPreferenceView extends FieldEditorPreferencePage implements
     @Override
     public void createFieldEditors() {
         providerEditor = new ComboFieldEditor(PeonConstants.PREF_PROVIDER_TYPE, "Provider Type:",
-                new String[][] { { "OpenAI (llama.cpp, OpenAI, HTTP/2)", AiProvider.OPEN_AI.name() },
-                        { "LM Studio (OpenAI-compatible, HTTP/1.1)", AiProvider.LM_STUDIO.name() },
+                new String[][] { 
+                        { "OpenAI (llama.cpp, unsloth, OmniRoute)", AiProvider.OPEN_AI.name() },
+                        { "LM Studio (OpenAI-compatible)", AiProvider.LM_STUDIO.name() },
                         { "Ollama", AiProvider.OLLAMA.name() },
                         { "OpenAI-Official Azure Foundry", AiProvider.OPEN_AI_OFFICIAL.name() },
                         { "OpenAI-GitHub Copilot (subscription)", AiProvider.GITHUB_COPILOT.name() },

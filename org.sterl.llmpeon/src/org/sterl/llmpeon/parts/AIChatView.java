@@ -108,7 +108,6 @@ public class AIChatView implements EclipseAiMonitor {
     private final UserContext userContext = new UserContext();
 
     private final IPreferenceChangeListener prefListener = event -> {
-        System.err.println("IPreferenceChangeListener ...");
         EclipseUtil.runInUiThread(parent, this::applyConfig);
     };
     
@@ -726,7 +725,7 @@ public class AIChatView implements EclipseAiMonitor {
     private void lockWhileWorking(boolean value) {
         if (parent == null || parent.isDisposed()) return;
         actionsBar.lockWhileWorking(value);
-        chatInput.setStopButtonVisible(value);
+        chatInput.isWorking(value);
         if (!value) chatHistory.hideLiveStatus();
         if (!value && questionWidget != null && questionWidget.isVisible()) {
             questionWidget.cancel();

@@ -31,9 +31,10 @@ public class UserInputWidget extends Composite {
 
     private final TextInputWidget textInput;
     private final Composite rightColumn;
-    private final Button sendButton;
     private Button micButton;   // null until voice is configured
+    private final Label filler;
     private final Button stopButton;
+    private final Button sendButton;
 
     private final Image micImage;
     private final Image sendImage;  // shared registry — must NOT be disposed
@@ -77,10 +78,10 @@ public class UserInputWidget extends Composite {
         textRowLayout.marginHeight = 2;
         textRowLayout.horizontalSpacing = 0;
         textRow.setLayout(textRowLayout);
-        textRow.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        textRow.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-        textInput = new TextInputWidget(textRow, SWT.NONE, 4, 10, this::requestReflow);
-        textInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        textInput = new TextInputWidget(textRow, SWT.NONE, 3, 10, this::requestReflow);
+        textInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
         textInput.setTextBackground(bgWhite);
 
         // Ctrl/Cmd+Enter sends; plain Enter inserts newline
@@ -147,14 +148,16 @@ public class UserInputWidget extends Composite {
 
         // Mic button — created lazily by setVoiceInputVisible(), disposed when hidden.
 
+        // Filler — expands vertically to push send to the bottom
+        filler = new Label(rightColumn, SWT.NONE);
+        GridData fillerData = new GridData(SWT.FILL, SWT.FILL, false, true);
+        fillerData.heightHint = 0;
+        filler.setLayoutData(fillerData);
         // Stop button — hidden initially, shown when working (sits at top above filler)
         stopButton = SwtUtil.createIconButton(rightColumn, stopImage, "Stop current request");
         stopButton.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, false));
-        stopButton.setVisible(false);
+        stopButton.setEnabled(false); 
         stopButton.addListener(SWT.Selection, e -> onStop.run());
-
-        // Filler — expands vertically to push send to the bottom
-        new Label(rightColumn, SWT.NONE).setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true));
 
         sendButton = SwtUtil.createIconButton(rightColumn, sendImage, "Send (Ctrl+Enter)");
         sendButton.setLayoutData(new GridData(SWT.CENTER, SWT.BOTTOM, false, false));
@@ -189,13 +192,11 @@ public class UserInputWidget extends Composite {
 
     /** Show or hide the mic button. Created on show, disposed on hide so it takes zero space when gone. */
     public void setVoiceInputVisible(boolean visible) {
-        System.err.println("setVoiceInputVisible->" + visible);
-
         if (visible && (micButton == null || micButton.isDisposed())) {
             micButton = SwtUtil.createIconButton(rightColumn, micImage, "Click to start recording");
             micButton.setLayoutData(new GridData(SWT.CENTER, SWT.TOP, false, false));
             // Insert at the very top of the column (before stop button)
-            micButton.moveAbove(stopButton);
+            micButton.moveAbove(filler);
             micButton.addListener(SWT.Selection, e -> onMicClick.run());
         } else if (!visible && micButton != null && !micButton.isDisposed()) {
             micButton.dispose();
@@ -215,10 +216,9 @@ public class UserInputWidget extends Composite {
         }
     }
 
-    /** Show/hide the Stop button; Send and Mic remain always functional. */
-    public void setStopButtonVisible(boolean visible) {
-        stopButton.setVisible(visible);
-        rightColumn.layout(true, true);
+    public void isWorking(boolean working) {
+        stopButton.setEnabled(working);
+        //rightColumn.layout(true, true);
     }
 
     @Override
