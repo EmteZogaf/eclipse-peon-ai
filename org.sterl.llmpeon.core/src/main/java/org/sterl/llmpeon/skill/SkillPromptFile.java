@@ -1,5 +1,6 @@
 package org.sterl.llmpeon.skill;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -7,6 +8,7 @@ import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
 import org.sterl.llmpeon.prompt.model.SimplePromptFile;
+import org.sterl.llmpeon.shared.FileUtils;
 
 import lombok.Getter;
 
@@ -37,30 +39,31 @@ public class SkillPromptFile extends SimplePromptFile {
     public String buildShortInfo() {
         StringBuilder sb = new StringBuilder();
         sb.append("---\nname: ").append(getName())
-          .append("\ndescription: ").append(getDescription());
+          .append("\n")
+          .append("description: ").append(getDescription());
         return sb.toString();
     }
 
     public String renderBody() {
         var result = new StringBuilder();
         result.append("=== SKILL: ").append(getName())
-                .append(" ===\n");
+                .append(" ===").append(System.lineSeparator());
         if (skillDir == null) {
-            result.append(getPromptFile()).append("\n");
-            result.append("only a SKILL file.\n");
+            result.append(getPromptFile()).append(System.lineSeparator());
+            result.append("only a SKILL file.").append(System.lineSeparator());
         } else {
-            result.append("SKILL disk dir: ").append(skillDir).append("\n");
+            result.append("SKILL disk dir: ").append(skillDir).append(System.lineSeparator());
             try (var stream = Files.walk(skillDir)) {
                 stream.filter(Files::isRegularFile).forEach(p -> result
-                        .append(skillDir.relativize(p)).append("\n"));
+                        .append(skillDir.relativize(p)).append(System.lineSeparator()));
             } catch (java.io.IOException e) {
                 result.append("[unable to scan directory] ")
-                        .append(e.getMessage()).append("\n");
+                      .append(e.getMessage()).append(System.lineSeparator());
             }
         }
-        result.append(
-                "Editing requires disk tools — ask access from the user if missing and needed.\n");
-        result.append("=== BODY ===\n");
+        result.append("Editing requires disk edit tools — ask access from the user if missing and needed."
+                + System.lineSeparator());
+        result.append("=== BODY ===").append(System.lineSeparator());
         result.append(getBody());
         return result.toString();
     }
@@ -71,10 +74,12 @@ public class SkillPromptFile extends SimplePromptFile {
                     "SKILL " + getName() + " has no files.");
         }
         // Strip leading slashes to avoid absolute path resolution
-        String cleaned = relativePath.startsWith("/")
-                ? relativePath.substring(1)
-                : relativePath;
-        Path target = skillDir.resolve(cleaned).normalize();
+        String cleaned = FileUtils.makeReltive(relativePath);
+
+        var target = skillDir.resolve(cleaned);
+        // accept SKILL path in the relative path
+        if (!Files.exists(target)) target = skillDir.getParent().resolve(cleaned);
+
         if (!target.startsWith(skillDir)) {
             throw new IllegalArgumentException(
                     "Path traversal not allowed: " + relativePath);
@@ -85,7 +90,7 @@ public class SkillPromptFile extends SimplePromptFile {
         }
         try {
             return Files.readString(target);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to read " + target, e);
         }
     }

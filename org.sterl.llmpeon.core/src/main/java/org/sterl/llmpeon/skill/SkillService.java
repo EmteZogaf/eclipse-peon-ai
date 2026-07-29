@@ -107,7 +107,7 @@ public class SkillService {
         if (skillFile != null && Files.isRegularFile(skillFile)) {
             var yml = PromptYmlParser.parseYml(skillFile);
             if (yml != null) {
-                var skill = SkillPromptFile.from(yml, entry.getParent());
+                var skill = SkillPromptFile.from(yml, entry);
                 skills.put(skill.getName().toLowerCase(Locale.ROOT), skill);
             }
         }

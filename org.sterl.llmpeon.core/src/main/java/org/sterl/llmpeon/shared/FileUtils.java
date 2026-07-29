@@ -16,6 +16,13 @@ public class FileUtils {
         return value.replace('\\', '/');
     }
     
+    public static String makeReltive(String value) {
+        value = normalizePath(value);
+        value = value.replace("../", ""); // /../ -> / 
+        if (value.startsWith("/")) value = value.substring(1);
+        return value;
+    }
+    
     public static Path toPath(String value) {
         if (value == null) return null;
         return Path.of(value).normalize();

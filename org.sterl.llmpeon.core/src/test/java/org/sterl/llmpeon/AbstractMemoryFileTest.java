@@ -21,7 +21,7 @@ public class AbstractMemoryFileTest {
     static void beforeAll() throws IOException {
         fs = Jimfs.newFileSystem(Configuration.unix());
         tmp = fs.getPath("/tmp");
-        Files.createDirectory(tmp);
+        tmp = Files.createDirectory(tmp);
     }
     @AfterAll
     static void afterAll() throws IOException {
