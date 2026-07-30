@@ -296,8 +296,8 @@ public class AgentModeService implements AiAgent {
     }
 
     @Override
-    public boolean isThinkEnabled() {
-        return getActiveService().isThinkEnabled();
+    public boolean isThinkSupported() {
+        return getActiveService().isThinkSupported();
     }
 
     @Override

@@ -1,6 +1,10 @@
 package org.sterl.llmpeon.agent;
 
+import java.nio.file.Path;
+
 import org.sterl.llmpeon.ai.ConfiguredChatModel;
+import org.sterl.llmpeon.memory.FileAgentHistoryStore;
+import org.sterl.llmpeon.memory.ThreadSafeMemory;
 import org.sterl.llmpeon.prompt.PromptLoader;
 import org.sterl.llmpeon.tool.ToolService;
 
@@ -12,6 +16,13 @@ public class AiDevAgent extends AbstractAgent {
     public AiDevAgent(ConfiguredChatModel configuredModel,
             ToolService toolService) {
         super(configuredModel, toolService);
+    }
+
+    public AiDevAgent(ConfiguredChatModel configuredModel,
+            ToolService toolService,
+            Path historyConfigDir) {
+        super(configuredModel, toolService,
+                historyConfigDir == null ? new ThreadSafeMemory() : new ThreadSafeMemory(new FileAgentHistoryStore(historyFile(historyConfigDir, NAME))));
     }
 
     @Override

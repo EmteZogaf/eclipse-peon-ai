@@ -1,8 +1,11 @@
 package org.sterl.llmpeon.agent;
 
+import java.nio.file.Path;
 import java.util.function.Predicate;
 
 import org.sterl.llmpeon.ai.ConfiguredChatModel;
+import org.sterl.llmpeon.memory.FileAgentHistoryStore;
+import org.sterl.llmpeon.memory.ThreadSafeMemory;
 import org.sterl.llmpeon.prompt.PromptLoader;
 import org.sterl.llmpeon.tool.ToolService;
 import org.sterl.llmpeon.tool.component.SmartToolExecutor;
@@ -16,6 +19,11 @@ public class AiPlanAgent extends AbstractAgent {
         super(configuredModel, toolService);
     }
 
+    public AiPlanAgent(ConfiguredChatModel configuredModel, ToolService toolService, Path historyConfigDir) {
+        super(configuredModel, toolService,
+                historyConfigDir == null ? new ThreadSafeMemory() : new ThreadSafeMemory(new FileAgentHistoryStore(historyFile(historyConfigDir, NAME))));
+    }
+
     @Override
     public String getSystemPrompt() {
         return BASE_PROMPT;
@@ -23,7 +31,7 @@ public class AiPlanAgent extends AbstractAgent {
 
     @Override
     public Double getTemperature() {
-        return configuredModel.getConfig().getDevTemperature();
+        return configuredModel.getConfig().getPlanTemperature();
     }
 
     @Override
@@ -32,8 +40,8 @@ public class AiPlanAgent extends AbstractAgent {
     }
 
     @Override
-    public boolean isThinkEnabled() {
-        return configuredModel.getConfig().isPlanThinkEnabled();
+    public boolean isThinkSupported() {
+        return configuredModel.getConfig().isPlanThinkSupported();
     }
 
     @Override

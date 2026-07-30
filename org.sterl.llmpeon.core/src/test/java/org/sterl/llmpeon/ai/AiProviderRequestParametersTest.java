@@ -16,8 +16,8 @@ import dev.langchain4j.model.openaiofficial.OpenAiOfficialResponsesChatRequestPa
 /**
  * Verifies {@link AiProvider#newRequestParameters(AgentConfig, java.util.List)} maps the per-agent
  * {@code think} value into the correct provider-specific request parameter via the 3-stage schema:
- * off -> nothing, concrete level -> verbatim, generic on -> {@link ThinkModelMapping} (no known
- * model -> nothing).
+ * off -> provider-specific off/omit, concrete level -> verbatim, generic on ->
+ * {@link ThinkModelMapping} (no known model -> nothing).
  */
 class AiProviderRequestParametersTest {
 
@@ -30,14 +30,14 @@ class AiProviderRequestParametersTest {
     }
 
     @Test
-    void devAndPlan_resolveIndependently() {
+    void devAndPlan_thinkSupportResolveIndependently() {
         var cfg = LlmConfig.builder()
                 .providerType(AiProvider.OPEN_AI).model("gpt-5.5")
-                .thinkEnabled(false)                                   // dev off
-                .planThinkEnabled(true).planThinkOnString("high")      // plan on, manual "high"
+                .thinkSupported(false)
+                .planThinkSupported(true).planThinkOnString("high")
                 .build();
-        assertThat(cfg.devAgentConfig().getThink()).isEqualTo("");     // off -> ""
-        assertThat(cfg.planAgentConfig().getThink()).isEqualTo("high");// manual on -> "high"
+        assertThat(cfg.devAgentConfig().getThink()).isEqualTo("");
+        assertThat(cfg.planAgentConfig().getThink()).isEqualTo("high");
         assertThat(cfg.compactAgentConfig().getThink()).isNull();
         assertThat(cfg.searchAgentConfig().getThink()).isNull();
     }
@@ -114,20 +114,71 @@ class AiProviderRequestParametersTest {
     }
 
     @Test
-    void ollamaThinkFlag_emptyOmits_explicitFalseSendsFalse_onSendsTrue() {
-        var empty = (OllamaChatRequestParameters)
+    void ollamaThinkFlag_unsetOmits_offSendsFalse_onSendsTrue() {
+        var unset = (OllamaChatRequestParameters)
                 AiProvider.OLLAMA.newRequestParameters(mc(AiProvider.OLLAMA, null), List.of());
-        assertThat(empty.think()).isNull();
+        assertThat(unset.think()).isNull();
 
-        // explicit off-token -> think:false (manual off, not silence)
         var off = (OllamaChatRequestParameters)
-                AiProvider.OLLAMA.newRequestParameters(mc(AiProvider.OLLAMA, "false"), List.of());
+                AiProvider.OLLAMA.newRequestParameters(mc(AiProvider.OLLAMA, ""), List.of());
         assertThat(off.think()).isFalse();
 
         var on = (OllamaChatRequestParameters)
                 AiProvider.OLLAMA.newRequestParameters(mc(AiProvider.OLLAMA, "true"), List.of());
         assertThat(on.think()).isTrue();
     }
+
+    @Test
+    void ollamaDevThinkSupportedFalse_sendsThinkFalse() {
+        var cfg = LlmConfig.builder()
+                .providerType(AiProvider.OLLAMA)
+                .model("gemma4:12b")
+                .thinkSupported(false)
+                .build();
+
+        assertThat(cfg.devAgentConfig().getThink()).isEqualTo("");
+        var params = (OllamaChatRequestParameters) cfg.devAgentConfig().newRequestParameters(List.of());
+        assertThat(params.think()).isFalse();
+    }
+
+    @Test
+    void ollamaUnsetStillOmitsForCompactAndSearch() {
+        var cfg = LlmConfig.builder()
+                .providerType(AiProvider.OLLAMA)
+                .model("gemma4:12b")
+                .build();
+
+        var compact = (OllamaChatRequestParameters) cfg.compactAgentConfig().newRequestParameters(List.of());
+        var search = (OllamaChatRequestParameters) cfg.searchAgentConfig().newRequestParameters(List.of());
+        assertThat(compact.think()).isNull();
+        assertThat(search.think()).isNull();
+    }
+
+    @Test
+    void openAiThinkSupportedFalse_emptyOffOmitsReasoning() {
+        var cfg = LlmConfig.builder()
+                .providerType(AiProvider.OPEN_AI_OFFICIAL)
+                .model("kimi-k2")
+                .thinkSupported(false)
+                .build();
+
+        var params = (OpenAiOfficialResponsesChatRequestParameters) cfg.devAgentConfig().newRequestParameters(List.of());
+        assertThat(params.reasoningEffort()).isNull();
+    }
+
+    @Test
+    void sendThinkingTransportIndependentFromThinkSupport() {
+        var cfg = LlmConfig.builder()
+                .providerType(AiProvider.OPEN_AI)
+                .model("m")
+                .thinkSupported(false)
+                .sendThinkingEnabled(true)
+                .build();
+
+        assertThat(cfg.shouldWeSendThinkingBackToLLM()).isTrue();
+        assertThat(cfg.devAgentConfig().getThink()).isEqualTo("");
+    }
+
 
     @Test
     void anthropicGenericOnUsesModelMapping() {

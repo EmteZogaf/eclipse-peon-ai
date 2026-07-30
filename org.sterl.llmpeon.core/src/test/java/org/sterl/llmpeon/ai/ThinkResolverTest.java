@@ -9,7 +9,7 @@ class ThinkResolverTest {
     private static final String[] OFF = {null, "", "  ", "false", "off", "no", "none", "FALSE", "Off"};
 
     @Test
-    void offValuesAreOmittedEverywhere() {
+    void offValuesMapToGenericOmitValues() {
         for (var v : OFF) {
             assertThat(ThinkResolver.toReasoningEffort(v)).as("effort %s", v).isNull();
             assertThat(ThinkResolver.toOnOff(v)).as("onOff %s", v).isNull();
@@ -43,7 +43,7 @@ class ThinkResolverTest {
 
     @Test
     void effectiveThink_autoMode_bothEmpty() {
-        // both strings empty -> auto: "true" marker when on, "" when off
+        // both strings empty -> auto: "true" marker when supported, "" when unsupported
         assertThat(ThinkResolver.effectiveThink(true, "", "")).isEqualTo("true");
         assertThat(ThinkResolver.effectiveThink(true, null, null)).isEqualTo("true");
         assertThat(ThinkResolver.effectiveThink(false, "", "")).isEqualTo("");
@@ -60,9 +60,9 @@ class ThinkResolverTest {
     }
 
     @Test
-    void toOllamaThink_distinguishesEmptyFromExplicitFalse() {
-        assertThat(ThinkResolver.toOllamaThink("")).isNull();
+    void toOllamaThink_distinguishesUnsetFromOff() {
         assertThat(ThinkResolver.toOllamaThink(null)).isNull();
+        assertThat(ThinkResolver.toOllamaThink("")).isEqualTo(Boolean.FALSE);
         assertThat(ThinkResolver.toOllamaThink("false")).isEqualTo(Boolean.FALSE);
         assertThat(ThinkResolver.toOllamaThink("none")).isEqualTo(Boolean.FALSE);
         assertThat(ThinkResolver.toOllamaThink("true")).isEqualTo(Boolean.TRUE);

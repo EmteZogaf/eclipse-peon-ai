@@ -2,20 +2,22 @@ package org.sterl.llmpeon.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.sterl.llmpeon.StreamMock;
 import org.sterl.llmpeon.ai.ConfiguredChatModel;
 import org.sterl.llmpeon.ai.LlmConfig;
+import org.sterl.llmpeon.memory.FileAgentHistoryStore;
 import org.sterl.llmpeon.shared.AiMonitor;
 import org.sterl.llmpeon.tool.ToolService;
 
@@ -182,6 +184,28 @@ class AbstractAgentTest {
 
         // AND
         assertThat(toolMessage.get()).isNull();
+    }
+
+    @Test
+    void clearDeletesOnlyThisAgentsPersistedHistory(@TempDir Path configDir) throws Exception {
+        // GIVEN
+        var devStore = new FileAgentHistoryStore(configDir.resolve("state/Peon-Dev-history.jsonl"));
+        var planStore = new FileAgentHistoryStore(configDir.resolve("state/Peon-Plan-history.jsonl"));
+        var config = LlmConfig.builder().model("mock").build();
+        var devAgent = new AiDevAgent(new ConfiguredChatModel(config, streamMock.buildMock(r -> ChatResponse.builder().aiMessage(AiMessage.from("ok")).build())), new ToolService(), configDir);
+        var planAgent = new AiPlanAgent(new ConfiguredChatModel(config, streamMock.buildMock(r -> ChatResponse.builder().aiMessage(AiMessage.from("ok")).build())), new ToolService(), configDir);
+        devAgent.addMessage(UserMessage.from("dev"));
+        planAgent.addMessage(UserMessage.from("plan"));
+        devAgent.queueMessage("queued");
+
+        // WHEN
+        devAgent.clear();
+
+        // THEN
+        assertThat(devAgent.getMemory().getCopy()).isEmpty();
+        assertThat(devAgent.getQueuedMessageCount()).isZero();
+        assertThat(Files.exists(devStore.historyFile())).isFalse();
+        assertThat(Files.exists(planStore.historyFile())).isTrue();
     }
 
     private List<String> extractUserTexts(List<ChatMessage> messages) {

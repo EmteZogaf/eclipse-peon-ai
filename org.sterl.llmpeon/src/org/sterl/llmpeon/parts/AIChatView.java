@@ -164,7 +164,7 @@ public class AIChatView implements EclipseAiMonitor {
             this::onHandoff,
             this::onAgentChange,
             aiService::setModel,
-            aiService::withThinking,
+            aiService::withThinkSupported,
             this::doCompressContext
         );
         actionsBar.setModel(aiService.getActiveAgent().getAgentModelName());
@@ -182,6 +182,7 @@ public class AIChatView implements EclipseAiMonitor {
         );
         
         applyConfig();
+        refreshChat();
 
         var prefs = InstanceScope.INSTANCE.getNode(PeonConstants.PLUGIN_ID);
         prefs.addPreferenceChangeListener(prefListener);
@@ -397,8 +398,8 @@ public class AIChatView implements EclipseAiMonitor {
     private void refreshAgentUI() {
         actionsBar.setAgents(aiService.getAgents());
         actionsBar.updateModeUI(aiService.getActiveAgent());
-        actionsBar.setThinkEnabled(aiService.getActiveAgent().isThinkEnabled());
-        refreshStatusLine();
+        actionsBar.setThinkSupported(aiService.getActiveAgent().isThinkSupported());
+        refreshChat();
     }
 
     private void applyConfig() {
@@ -414,9 +415,8 @@ public class AIChatView implements EclipseAiMonitor {
         actionsBar.setAgents(aiService.getAgents());
         actionsBar.updateModeUI(aiService.getActiveAgent());
 
-        // Sync the Think toggle to the selected agent's state (Dev/Plan from prefs, Custom from
-        // its AGENT.md). The brain button persists per agent; there is no cascade.
-        actionsBar.setThinkEnabled(aiService.getActiveAgent().isThinkEnabled());
+        // Sync thinking support to the selected agent (Dev/Plan from prefs, Custom from AGENT.md).
+        actionsBar.setThinkSupported(aiService.getActiveAgent().isThinkSupported());
         applyMcpConfig();
         syncAgentsMdToggle();
         refreshStatusLine();
@@ -550,8 +550,7 @@ public class AIChatView implements EclipseAiMonitor {
             actionsBar.selectModel(aiService.getActiveModel());
         }
 
-        // brain toggle follows the newly selected agent (no cascade)
-        actionsBar.setThinkEnabled(aiService.getActiveAgent().isThinkEnabled());
+        actionsBar.setThinkSupported(aiService.getActiveAgent().isThinkSupported());
 
         // Show scaffold tutorial on first activation
         var tutorial = aiService.getScaffoldTutorial();

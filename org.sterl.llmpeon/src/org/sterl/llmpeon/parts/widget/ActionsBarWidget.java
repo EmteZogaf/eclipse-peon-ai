@@ -20,7 +20,7 @@ import org.sterl.llmpeon.shared.StringUtil;
 
 /**
  * Action bar below the user input. RowLayout (wrapping) with mode selector,
- * model selector, Think toggle, Clear, and conditional controls.
+ * model selector, thinking-support toggle, Clear, and conditional controls.
  */
 public class ActionsBarWidget extends Composite {
 
@@ -74,7 +74,7 @@ public class ActionsBarWidget extends Composite {
         btnThink = new Button(this, SWT.TOGGLE);
         btnThink.setImage(ImageUtil.loadImage(this, ImageUtil.THINK));
         //btnThink.setText("\uD83E\uDDE0 Think");
-        btnThink.setToolTipText("Enable extended thinking for the next request");
+        btnThink.setToolTipText("Model supports thinking; selects configured on/off reasoning value");
         btnThink.addListener(SWT.Selection, e -> onThinkToggle.accept(btnThink.getSelection()));
 
         btnCompact = new Button(this, SWT.PUSH);
@@ -210,13 +210,13 @@ public class ActionsBarWidget extends Composite {
         }
     }
 
-    /** Set the Think toggle state without firing the listener. */
-    public void setThinkEnabled(boolean value) {
+    /** Set the thinking-support toggle state without firing the listener. */
+    public void setThinkSupported(boolean value) {
         btnThink.setSelection(value);
     }
 
-    /** Returns whether the Think toggle is currently on. */
-    public boolean isThinkEnabled() {
+    /** Returns whether thinking support is selected. */
+    public boolean isThinkSupported() {
         return btnThink.getSelection();
     }
     

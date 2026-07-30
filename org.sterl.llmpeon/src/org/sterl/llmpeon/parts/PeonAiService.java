@@ -131,7 +131,7 @@ public class PeonAiService implements MessageProvider {
         sharedToolService.addTool(planTool);
 
         agentService  = new AgentService(true,
-                config.getConfigDir().resolve(LlmConfig.AGENT_DIRECTORY), sharedToolService, configuredModel);
+                config.getConfigDir().resolve(LlmConfig.AGENT_DIRECTORY), sharedToolService, configuredModel, config.getConfigDir());
 
         scaffoldAgent = new AiScaffoldAgent(configuredModel);
         scaffoldAgent.addTool(new SkillTool(skillService));
@@ -357,10 +357,10 @@ public class PeonAiService implements MessageProvider {
         LlmPreferenceInitializer.saveModel(model.getId(), active);
     }
 
-    public void withThinking(Boolean enabled) {
-        if (enabled == null) enabled = Boolean.FALSE;
+    public void withThinkSupported(Boolean supported) {
+        if (supported == null) supported = Boolean.FALSE;
         var active = getActiveAgent();
-        boolean prefChanged = LlmPreferenceInitializer.saveThinkEnabled(enabled, active);
+        boolean prefChanged = LlmPreferenceInitializer.saveThinkSupported(supported, active);
         if (prefChanged) {
             // Dev/Plan live in LlmConfig -> reload so devAgentConfig()/planAgentConfig() pick it up
             updateConfig(LlmPreferenceInitializer.buildWithDefaults());

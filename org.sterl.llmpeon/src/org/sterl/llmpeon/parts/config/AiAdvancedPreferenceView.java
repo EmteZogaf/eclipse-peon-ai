@@ -33,7 +33,7 @@ public class AiAdvancedPreferenceView extends FieldEditorPreferencePage implemen
 
         addField(new StringFieldEditor(PeonConstants.PREF_MODEL,                  "Default Model (dev):", getFieldEditorParent()));
         addField(new DoubleSliderFieldEditor(PeonConstants.PREF_DEV_TEMPERATURE,  "Dev temperature:", getFieldEditorParent()));
-        addField(new BooleanFieldEditor(PeonConstants.PREF_THINKING_ENABLED,      "Dev: Supports thinking", getFieldEditorParent()));
+        addField(new BooleanFieldEditor(PeonConstants.PREF_THINK_SUPPORTED,       "Dev: Supports thinking", getFieldEditorParent()));
 
         addReasoningLegend();
 
@@ -43,7 +43,7 @@ public class AiAdvancedPreferenceView extends FieldEditorPreferencePage implemen
 
         addField(new StringFieldEditor(PeonConstants.PREF_PLAN_MODEL,             "Plan: Model (leave empty to use default):", getFieldEditorParent()));
         addField(new DoubleSliderFieldEditor(PeonConstants.PREF_PLAN_TEMPERATURE, "Plan temperature:", getFieldEditorParent()));
-        addField(new BooleanFieldEditor(PeonConstants.PREF_PLAN_THINK_ENABLED,    "Plan: Supports thinking", getFieldEditorParent()));
+        addField(new BooleanFieldEditor(PeonConstants.PREF_PLAN_THINK_SUPPORTED,  "Plan: Supports thinking", getFieldEditorParent()));
 
         var thinkPlanString = new TitledGroup(getFieldEditorParent(), "Plan reasoning String");
         addField(new EditableComboFieldEditor(PeonConstants.PREF_PLAN_THINK_ON_STRING,  "On  (empty=auto):", ReasoningPresets.toArray(), thinkPlanString.getGroup()));
@@ -76,7 +76,7 @@ public class AiAdvancedPreferenceView extends FieldEditorPreferencePage implemen
     private void addReasoningLegend() {
         Label legend = new Label(getFieldEditorParent(), SWT.WRAP);
         legend.setText("Reasoning value — OpenAI: high/medium/low/minimal · Claude: enabled/adaptive"
-                + " · Ollama: true/false · LM Studio: any value (sent as \"reasoning\"). Empty = auto.");
+                + " · Ollama: true/false · LM Studio: any value. Supports=false uses off-value; empty off omits except Ollama sends think:false.");
         var gd = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
         gd.horizontalSpan = 2;
         gd.widthHint = 480;

@@ -35,6 +35,7 @@ public class AgentService {
 
     private final ConfiguredChatModel chatModel;
     private final ToolService toolService;
+    private final Path historyConfigDir;
 
     private final Map<String, AiAgent> agents = new ConcurrentHashMap<>();
 
@@ -53,7 +54,15 @@ public class AgentService {
             Path agentsDirectory, 
             ToolService toolService,
             ConfiguredChatModel configuredChatModel) {
-        this(false, agentsDirectory, toolService, configuredChatModel);
+        this(false, agentsDirectory, toolService, configuredChatModel, null);
+    }
+
+    public AgentService(
+            Path agentsDirectory,
+            ToolService toolService,
+            ConfiguredChatModel configuredChatModel,
+            Path historyConfigDir) {
+        this(false, agentsDirectory, toolService, configuredChatModel, historyConfigDir);
     }
 
     public AgentService(
@@ -61,16 +70,26 @@ public class AgentService {
             Path agentsDirectory, 
             ToolService toolService,
             ConfiguredChatModel configuredChatModel) {
+        this(withDefaultAgent, agentsDirectory, toolService, configuredChatModel, null);
+    }
+
+    public AgentService(
+            boolean withDefaultAgent,
+            Path agentsDirectory, 
+            ToolService toolService,
+            ConfiguredChatModel configuredChatModel,
+            Path historyConfigDir) {
         this.chatModel = configuredChatModel;
         this.toolService = toolService;
+        this.historyConfigDir = historyConfigDir;
         
         Objects.requireNonNull(this.chatModel, "ConfiguredChatModel cannot be null");
         Objects.requireNonNull(this.toolService, "ToolService cannot be null");
 
         if (withDefaultAgent) {
-            devAgent = new AiDevAgent(chatModel, toolService);
+            devAgent = new AiDevAgent(chatModel, toolService, historyConfigDir);
             this.persistentAgents.put(devAgent.getName(), devAgent);
-            planAgent = new AiPlanAgent(chatModel, toolService);
+            planAgent = new AiPlanAgent(chatModel, toolService, historyConfigDir);
             this.persistentAgents.put(planAgent.getName(), planAgent);
             this.activeAgent = devAgent;
         } else {
@@ -156,8 +175,9 @@ public class AgentService {
                 var agentCfg = readAgentPrompt(entry);
                 if (agentCfg != null) {
                     var agent = this.agents.get(agentCfg.getName());
-                    if (agent == null) agent = new CustomAgent(agentCfg, chatModel, toolService);
-                    else if (agent instanceof CustomAgent ca) ca.setPromptFile(agentCfg);
+                    if (agent == null) {
+                        agent = new CustomAgent(agentCfg, chatModel, toolService, historyConfigDir);
+                    } else if (agent instanceof CustomAgent ca) ca.setPromptFile(agentCfg);
                     newAgents.put(agent.getName(), agent);
                 }
             }

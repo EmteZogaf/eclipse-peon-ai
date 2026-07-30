@@ -64,11 +64,11 @@ and breaks. Keep frontmatter values comment-free.
 | `temperature` | Override temperature for this agent. Float 0.0–2.0. |
 | `handover` | Agent name to hand off to after work is done. Shows a **Handoff → [name]** button when set. Enables workflow chains (e.g. plan → dev → review). |
 | `model` | Optional model override. Changing the model in the UI while this agent is active writes it back here. |
-| `think_supported` | `true`/`false` — declares that this agent supports thinking. The chat brain button provides the runtime toggle. |
-| `think_on_string` | Value sent when enabled. A level `high`/`medium`/`low`/`minimal` (OpenAI), `true` (Ollama/Anthropic), etc. **Empty → auto** ([built-in model mapping](./advanced-configuration.md#built-in-model-mapping)). Setting it (or `think_off_string`) switches the mapping off. |
-| `think_off_string` | Value sent when disabled. **Empty → send nothing.** Set e.g. `false` for Ollama to force `think:false`. |
-| `think_send` | *(reserved)* Show the model's reasoning and resend it next turn (Qwen, Mistral, DeepSeek). Currently the global **Send thinking back to model** setting applies to all agents; this per-agent key is parsed but not yet wired per request. |
-| `think` | *(legacy alias, auto-migrated)* Read as `think_on_string` and implies `think_supported` for on-values. Old files are auto-migrated on the first write operation (e.g. model change, think toggle). Prefer the `think_*` keys above. |
+| `think_supported` | `true`/`false` — declares that this agent's model supports thinking. The chat brain button saves this value for the selected agent. |
+| `think_on_string` | Value used when supported. A level `high`/`medium`/`low`/`minimal` (OpenAI), `true` (Ollama/Anthropic), etc. **Empty → auto** ([built-in model mapping](./advanced-configuration.md#built-in-model-mapping)). Setting it (or `think_off_string`) switches the mapping off. |
+| `think_off_string` | Value used when unsupported. Empty means provider default, except Ollama sends `think:false`. Set `false` for providers that need explicit off. |
+| `think_send` | *(reserved)* Show the model's reasoning and resend it next turn (Qwen, Mistral, DeepSeek). Currently the global **Show and resend model thinking** setting applies to all agents; this per-agent key is parsed but not yet wired per request. |
+| `think` | *(legacy alias, auto-migrated)* Read as `think_on_string` and implies `think_supported` for on-values. Old files are auto-migrated on the first write operation (e.g. model or thinking-support change). Prefer the `think_*` keys above. |
 | `tools` | Allowlist of tool-name prefixes. **Omit it and the agent gets _no_ tools** — use `- '*'` to allow all. |
 
 ## Workflow Handoff

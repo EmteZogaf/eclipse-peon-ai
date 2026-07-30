@@ -1,11 +1,14 @@
 package org.sterl.llmpeon.agent;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
 import org.sterl.llmpeon.ai.ConfiguredChatModel;
+import org.sterl.llmpeon.memory.FileAgentHistoryStore;
+import org.sterl.llmpeon.memory.ThreadSafeMemory;
 import org.sterl.llmpeon.prompt.PromptLoader;
 import org.sterl.llmpeon.prompt.model.SimplePromptFile;
 import org.sterl.llmpeon.tool.ToolPolicy;
@@ -48,6 +51,15 @@ public class CustomAgent extends AbstractAgent {
             ConfiguredChatModel configuredModel,
             ToolService toolService) {
         super(configuredModel, toolService);
+        this.promptFile = promptFile;
+    }
+
+    public CustomAgent(SimplePromptFile promptFile,
+            ConfiguredChatModel configuredModel,
+            ToolService toolService,
+            Path historyConfigDir) {
+        super(configuredModel, toolService,
+                historyConfigDir == null ? new ThreadSafeMemory() : new ThreadSafeMemory(new FileAgentHistoryStore(historyFile(historyConfigDir, promptFile.getName()))));
         this.promptFile = promptFile;
     }
 
@@ -105,8 +117,8 @@ public class CustomAgent extends AbstractAgent {
     }
 
     @Override
-    public boolean isThinkEnabled() {
-        // THINK_SUPPORTED (canonical) takes precedence; THINK_ENABLED (deprecated) as fallback; legacy `think:` implies enabled for an on-value
+    public boolean isThinkSupported() {
+        // THINK_SUPPORTED (canonical) takes precedence; THINK_ENABLED (deprecated) as fallback; legacy `think:` implies support for an on-value.
         if (promptFile.firstOrDefault(THINK_SUPPORTED, null) != null) return promptFile.isTrue(THINK_SUPPORTED);
         if (promptFile.firstOrDefault(THINK_ENABLED, null) != null) return promptFile.isTrue(THINK_ENABLED);
         var legacy = promptFile.firstOrDefault(THINK, null);
@@ -120,7 +132,7 @@ public class CustomAgent extends AbstractAgent {
         var off = promptFile.firstOrDefault(THINK_OFF, null);
         return configuredModel.getConfig().customAgentConfig(
                 promptFile.firstOrDefault(MODEL, null),
-                isThinkEnabled(), on, off, getTemperature());
+                isThinkSupported(), on, off, getTemperature());
     }
 
     @Override

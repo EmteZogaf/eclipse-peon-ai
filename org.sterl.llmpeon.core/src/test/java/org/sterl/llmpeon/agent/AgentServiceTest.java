@@ -17,6 +17,9 @@ import org.sterl.llmpeon.ai.LlmConfig;
 import org.sterl.llmpeon.mock.MockLlmServer;
 import org.sterl.llmpeon.tool.ToolService;
 
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.UserMessage;
+
 class AgentServiceTest extends AbstractMemoryFileTest {
 
     private static Path writeAgent(Path agentsDir, String name, String content) throws Exception {
@@ -161,5 +164,44 @@ class AgentServiceTest extends AbstractMemoryFileTest {
 
         // THEN
         assertThat(service.get("docs").orElseThrow().getAgentModelName()).isEqualTo("b");
+    }
+
+    @Test
+    void customAgentHistoryPersistsWithoutHistoryFlag() throws Exception {
+        // GIVEN
+        var agentsDir = tmp.resolve("agents");
+        writeAgent(agentsDir, "docs", "---\nname: docs\n---\nbody");
+        var subject = new AgentService(false, agentsDir, toolService, chatModel, tmp);
+        var agent = subject.get("docs").orElseThrow();
+
+        // WHEN
+        agent.getMemory().add(UserMessage.from("hello"));
+        agent.getMemory().add(AiMessage.from("world"));
+        var restarted = new AgentService(false, agentsDir, toolService, chatModel, tmp);
+
+        // THEN
+        var loaded = restarted.get("docs").orElseThrow().getMemory().getCopy();
+        assertThat(loaded).hasSize(2);
+        assertThat(Files.exists(tmp.resolve("state/docs-history.jsonl"))).isTrue();
+    }
+
+    @Test
+    void enablesHistoryForPlanDevAndCustomOnly() throws Exception {
+        // GIVEN
+        var agentsDir = tmp.resolve("agents");
+        writeAgent(agentsDir, "docs", "---\nname: docs\n---\nbody");
+        var subject = new AgentService(true, agentsDir, toolService, chatModel, tmp);
+
+        // WHEN
+        subject.get(AiDevAgent.NAME).orElseThrow().getMemory().add(UserMessage.from("dev"));
+        subject.get(AiPlanAgent.NAME).orElseThrow().getMemory().add(UserMessage.from("plan"));
+        subject.get("docs").orElseThrow().getMemory().add(UserMessage.from("docs"));
+
+        // THEN
+        assertThat(Files.exists(tmp.resolve("state/Peon-Dev-history.jsonl"))).isTrue();
+        assertThat(Files.exists(tmp.resolve("state/Peon-Plan-history.jsonl"))).isTrue();
+        assertThat(Files.exists(tmp.resolve("state/docs-history.jsonl"))).isTrue();
+        assertThat(Files.list(tmp.resolve("state")).map(p -> p.getFileName().toString()))
+                .containsExactlyInAnyOrder("Peon-Dev-history.jsonl", "Peon-Plan-history.jsonl", "docs-history.jsonl");
     }
 }

@@ -11,13 +11,12 @@ public interface PeonConstants {
     String PREF_MAX_TOKENS       = "llm.maxTokens";
     String PREF_TIMEOUT          = "llm.timeout";
 
-    // Dev == GLOBAL == DEFAULT: thinkEnabled (boolean) + on/off strings. Kept historic enabled key.
-    String PREF_THINKING_ENABLED        = "llm.thinkingEnabled";   // boolean
+    // Dev/default and Plan model thinking support. Values keep historic storage keys.
+    String PREF_THINK_SUPPORTED         = "llm.thinkingEnabled";
     String PREF_SEND_THINKING_ENABLED   = "llm.sendThinkingEnabled";
     String PREF_THINK_ON_STRING         = "llm.thinkOnString";
     String PREF_THINK_OFF_STRING        = "llm.thinkOffString";
-    // Plan agent think.
-    String PREF_PLAN_THINK_ENABLED      = "llm.planThinkEnabled";  // boolean
+    String PREF_PLAN_THINK_SUPPORTED    = "llm.planThinkEnabled";
     String PREF_PLAN_THINK_ON_STRING    = "llm.planThinkOnString";
     String PREF_PLAN_THINK_OFF_STRING   = "llm.planThinkOffString";
 

@@ -31,6 +31,13 @@ You can also ask the AI directly to manage stored guidelines:
 
 ### How it works
 
+
+## Chat history persistence
+
+Peon also persists the current chat history for Peon-Dev, Peon-Plan, and custom agents, so their conversation context survives Eclipse/plugin restarts.
+
+The **Clear** button deletes only the active agent's chat history and queued messages. It does not delete Peon Memory guidelines; use the memory reset command for that.
+
 Guidelines are injected as a `Memory:` block at the start of every conversation. The AI sees them before processing your request and follows them whenever they apply.
 
 Storage is workspace-scoped — each Eclipse workspace maintains its own independent set of guidelines. A maximum of 500 entries is supported; when full, the oldest guideline is automatically removed.

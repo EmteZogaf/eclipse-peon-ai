@@ -2,6 +2,7 @@
 package org.sterl.llmpeon.tool.tools;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -9,6 +10,7 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.sterl.llmpeon.shared.ArgsUtil;
 
@@ -28,6 +30,8 @@ public class ShellTool extends AbstractTool {
     private static final int DEFAULT_TIMEOUT_S = 60;
     private static final int MAX_OUTPUT_LENGTH = 3000;
     private static final int DEFAULT_TAIL_LINES = 50;
+
+    private static volatile UserToolEnvironment userToolEnvironment;
 
     private ShellConfirmationProvider confirmationProvider = null;
 
@@ -100,11 +104,9 @@ public class ShellTool extends AbstractTool {
         try {
             onTool("Running: `" + command + "` in " + effectiveDir);
 
-            // Do NOT set PATH here: the login shell (-l) rebuilds it from the user's
-            // rc files (SDKMAN, brew, mvn wrapper, etc.). Clobbering it with Eclipse's
-            // GUI-inherited PATH breaks tools like mvn when launched from Finder.
             var pb = new ProcessBuilder(shellCommand);
             pb.directory(effectiveDir.toFile());
+            prepareUserToolEnvironment(pb.environment());
             // ensure we have set Xmx for mvn as it is very slow otherwise ...
             if (command.contains("mvn")) pb.environment().putIfAbsent("MAVEN_OPTS", "-Xmx4g");
             pb.redirectErrorStream(true); // merge stderr into stdout
@@ -175,6 +177,44 @@ public class ShellTool extends AbstractTool {
         return (command.contains("| tail") || command.contains("|tail")) 
             || (command.contains("| head") || command.contains("|head"));
     }
+
+
+    private static void prepareUserToolEnvironment(java.util.Map<String, String> env) {
+        var userEnv = userToolEnvironment();
+        if (!userEnv.pathPrefix().isEmpty()) {
+            env.put("PATH", userEnv.pathPrefix() + File.pathSeparator + env.getOrDefault("PATH", ""));
+        }
+        if (userEnv.javaHome() != null) env.putIfAbsent("JAVA_HOME", userEnv.javaHome());
+    }
+
+    private static UserToolEnvironment userToolEnvironment() {
+        var result = userToolEnvironment;
+        if (result == null) {
+            result = discoverUserToolEnvironment();
+            userToolEnvironment = result;
+        }
+        return result;
+    }
+
+    private static UserToolEnvironment discoverUserToolEnvironment() {
+        var home = System.getProperty("user.home");
+        var sdkmanJava = home + "/.sdkman/candidates/java/current";
+        var pathPrefix = Stream.of(
+                home + "/.sdkman/candidates/maven/current/bin",
+                sdkmanJava + "/bin",
+                "/opt/homebrew/bin",
+                "/usr/local/bin",
+                "/usr/bin",
+                "/bin",
+                "/usr/sbin",
+                "/sbin")
+            .filter(p -> Files.isDirectory(Path.of(p)))
+            .reduce((a, b) -> a + File.pathSeparator + b)
+            .orElse("");
+        return new UserToolEnvironment(pathPrefix, Files.isDirectory(Path.of(sdkmanJava)) ? sdkmanJava : null);
+    }
+
+    private record UserToolEnvironment(String pathPrefix, String javaHome) {}
 
 
     private static String tailLines(List<String> lines, Integer maxLines) {

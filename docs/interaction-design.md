@@ -15,7 +15,7 @@
 │  │ Text (auto-grow, min 2, max 7 rows)       [🎤] │ │
 │  │                                           [▶/■] │ │
 │  ├─────────────────────────────────────────────────┤ │
-│  │ [Plan▾] [Model▾] [🧠 Think] [Clear]      [▶/■] │ │
+│  │ [Plan▾] [Model▾] [🧠 Support] [Clear]    [▶/■] │ │
 │  │ [Start Impl.]                        (conditional) │ │
 │  ├─────────────────────────────────────────────────┤ │
 │  │ [📌 ProjectName] [⚡ N skills] [AGENTS.md]      │ │
@@ -45,7 +45,7 @@ Layout: `GridLayout(2)` — left cell is a wrapping `RowLayout` composite, right
 |----------|---------|-------|
 | Left | **Mode selector** (`Plan`, `Dev`, `Agent`) | combo |
 | Left | **Model selector** | combo, ~200px |
-| Left | **🧠 Think toggle** | on/off for extended thinking; default from "Supports Thinking" preference; session-only, not written back to preferences |
+| Left | **🧠 Thinking support** | model-support flag for selected agent; Dev/Plan persist to preferences, custom agents persist to `AGENT.md` |
 | Left | **Clear** | clears conversation history |
 | Right (pinned) | **Send / Stop** | always rightmost; icon swaps while working |
 | Conditional | **Start Impl.** | visible in Plan/Agent mode when AI has replied |

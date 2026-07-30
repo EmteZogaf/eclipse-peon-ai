@@ -40,17 +40,17 @@ Temperature controls the randomness of model outputs:
 
 ## Per-Agent Think
 
-Thinking/reasoning is sent **per request**, so each agent resolves its own value for its own provider and model. This solves mixed setups — for example planning with **GPT** (`reasoning.effort=high`) while implementing with **DeepSeek** through an OpenAI-compatible gateway that rejects `reasoning.effort`.
+Thinking/reasoning is sent **per request**, so each agent resolves its own value for its provider and model. This solves mixed setups — for example planning with **GPT** (`reasoning.effort=high`) while implementing with **DeepSeek** through an OpenAI-compatible gateway that rejects `reasoning.effort`.
 
 Each agent — **Dev** (the default), **Plan**, and every [custom agent](./custom-agents.md) — has three values. **Search** and **Compact** never think.
 
 | Setting | Meaning |
 |---------|---------|
-| **Thinking** (checkbox) | On → send the *on-value*; off → send the *off-value*. Toggled by the chat brain button, which saves it for the selected agent. |
-| **Thinking value (on)** | Sent when thinking is on. **Empty → auto** (the [built-in model mapping](#built-in-model-mapping) picks the value for your provider/model). |
-| **Thinking value (off)** | Sent when thinking is off. **Empty → send nothing.** Set e.g. `false` for Ollama to force `think:false`. |
+| **Model supports thinking** | Supported → use the *on-value*; unsupported → use the *off-value*. The chat brain button saves this per selected agent. |
+| **Thinking value (on)** | Used when thinking is supported. **Empty → auto** (the [built-in model mapping](#built-in-model-mapping) picks the value for your provider/model). |
+| **Thinking value (off)** | Used when thinking is unsupported. **Empty → provider default**, except Ollama sends `think:false`. |
 
-The two value fields are an **editable dropdown**: pick a common preset or type any value your provider accepts. Which tokens make sense depends on the provider:
+The two value fields are an **editable dropdown**: pick a common preset or type any value your provider accepts.
 
 | Provider | Reasoning value |
 |----------|-----------------|
@@ -59,33 +59,31 @@ The two value fields are an **editable dropdown**: pick a common preset or type 
 | **Ollama** | `true` / `false` (the `think` flag) |
 | **LM Studio** | any value — sent as the custom `reasoning` body property |
 
-Dev and Plan have their own checkbox + on/off fields on this page; custom agents set the same via [`AGENT.md` frontmatter](./custom-agents.md). **Nothing is inherited between agents** — each resolves independently, so the GPT-plan / DeepSeek-dev case just works.
+Dev and Plan have their own support checkbox + on/off fields on this page; custom agents set the same via [`AGENT.md` frontmatter](./custom-agents.md). **Nothing is inherited between agents**.
 
 ### Auto vs. manual
 
-- **Auto** — both value fields empty → Peon uses the built-in mapping when thinking is on.
-- **Manual** — set *either* value field → the mapping is switched off in **both** directions and your strings are sent verbatim (an empty active field sends nothing).
+- **Auto** — both value fields empty → Peon uses the built-in mapping when thinking is supported.
+- **Manual** — set *either* value field → the mapping is switched off in **both** directions and your strings are used verbatim.
 
 ### Built-in model mapping
 
-When both value fields are empty and thinking is on, Peon maps to a provider- and model-specific value using built-in tables (one file per provider under the core plugin's `thinking/` resources):
+When both value fields are empty and thinking is supported, Peon maps to a provider- and model-specific value using built-in tables (one file per provider under the core plugin's `thinking/` resources):
 
-- **OpenAI family** — known reasoning models (`gpt*`, `o1`, `o3`, `o4`) → `reasoning.effort=high`; an **unknown model → nothing is sent**, so a non-reasoning gateway model is never rejected.
+- **OpenAI family** — known reasoning models (`gpt*`, `o1`, `o3`, `o4`) → `reasoning.effort=high`; an **unknown model → nothing is sent**.
 - **Anthropic** — `opus-4-8` / `opus-4-7` / `mythos` → `adaptive`; other Claude models → `enabled`.
 
 **Provider support:**
 
-- **OpenAI family** (OpenAI, OpenAI-official / Azure, GitHub Models, GitHub Copilot) — `reasoning.effort`. No "off" value; off = nothing sent.
-- **Ollama** — the `think` flag; an explicit off-value like `false` sends `think:false`.
+- **OpenAI family** (OpenAI, OpenAI-official / Azure, GitHub Models, GitHub Copilot) — `reasoning.effort`. Empty/off = nothing sent.
+- **Ollama** — unsupported with an empty off-value sends `think:false`; unset (`null`) omits.
 - **Anthropic** — extended thinking (`enabled` / `adaptive`); off = nothing sent.
-- **LM Studio** — the custom `reasoning` body property (experimental; not officially supported yet).
-- **Google Gemini / Mistral** — *no per-request support in the bundled langchain4j version*; these follow the agent's Thinking checkbox at build time.
-
-**Example** matching a mixed gateway setup: leave Dev's value fields empty and its Thinking off (or on — the heuristic sends nothing to a non-reasoning model); turn Plan's Thinking on and set **Thinking value (on)** to `high`. Search/compact stay off automatically.
+- **LM Studio** — the custom `reasoning` body property.
+- **Google Gemini / Mistral** — no per-request support in the bundled langchain4j version; these follow the Dev/default support checkbox at build time.
 
 ### Send thinking back
 
-**Send thinking back to model** (on the main Peon Configuration page) is a separate switch: it shows the model's own reasoning and resends it on the next turn (needed by Qwen, Mistral, DeepSeek). It is **independent** of the Thinking toggle — a reasoning model may still think even when no attribute is sent.
+**Show and resend model thinking** (main Peon Configuration page) is a separate global transport switch. It is **independent** of model support.
 
 ## Debug Mode
 
@@ -122,7 +120,6 @@ Useful for:
 
 Controls the maximum number of tokens in model responses (0 = disable limit):
 `langchain4j` and some LLMs default to 1024 -- if you have odd behaviors increase this.
-
 
 | Setting | Effect |
 |---------|--------|

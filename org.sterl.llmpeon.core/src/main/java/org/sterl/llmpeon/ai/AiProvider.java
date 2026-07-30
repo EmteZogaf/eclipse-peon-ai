@@ -65,7 +65,7 @@ public enum AiProvider {
         public ChatRequestParameters newRequestParameters(AgentConfig mc, List<ToolSpecification> tools) {
             var b = OllamaChatRequestParameters.builder();
             applyBase(b, mc, tools);
-            // empty -> omit; explicit off-token -> think:false; else think:true
+            // unset/null omits; resolved off/empty sends think:false; else think:true
             var think = ThinkResolver.toOllamaThink(mc.getThink());
             if (think != null) b.think(think);
             return b.build();
@@ -225,8 +225,8 @@ public enum AiProvider {
             // the thought_signature is not re-sent with tool results -> INVALID_ARGUMENT error.
             result.returnThinking(Boolean.TRUE).sendThinking(Boolean.TRUE);
             // TODO per-agent think: Gemini has no per-request thinking parameter subtype in this
-            // langchain4j version, so thinking stays build-time via the global thinkingEnabled toggle.
-            if (c.isThinkingOn()) {
+            // langchain4j version, so thinking stays build-time via default model support.
+            if (c.isThinkSupported()) {
                 var think = GeminiThinkingConfig.builder()
                     .thinkingLevel(GeminiThinkingLevel.HIGH)
                     .thinkingBudget(c.getMaxTokens() > 0 ? c.getMaxTokens() : 4096);

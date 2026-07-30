@@ -74,9 +74,15 @@ public interface AiAgent {
         return false;
     }
 
-    /** @return whether thinking is enabled for this agent (drives the chat brain toggle state). */
-    default boolean isThinkEnabled() {
+    /** @return whether this agent's model supports thinking (drives the chat brain toggle state). */
+    default boolean isThinkSupported() {
         return false;
+    }
+
+    /** @deprecated use {@link #isThinkSupported()} */
+    @Deprecated
+    default boolean isThinkEnabled() {
+        return isThinkSupported();
     }
 
     /** @return true if the agent is currently processing a call (including internal queue chaining). */

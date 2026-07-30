@@ -7,15 +7,14 @@ import org.sterl.llmpeon.shared.StringUtil;
 /**
  * Resolves the per-agent "think" string into provider-specific thinking/reasoning values.
  *
- * <p>The string IS the effort. The following are treated as "off" and always cause the thinking
- * property to be <b>omitted entirely</b> (each provider then applies its own default): {@code null},
- * {@code ""}, {@code "false"}, {@code "off"}, {@code "no"}, {@code "none"}. Everything else
+ * <p>The string IS the effort. The following are treated as "off": {@code null}, {@code ""},
+ * {@code "false"}, {@code "off"}, {@code "no"}, {@code "none"}. Everything else
  * ({@code "true"}/{@code "on"}/{@code "yes"} or an explicit level like {@code "high"}/{@code "medium"}/
  * {@code "low"}/{@code "minimal"}) enables thinking.</p>
  *
- * <p>Consequence (intentional): for the "off" set we send nothing about thinking to the LLM, so each
- * provider's own default applies — a provider with native {@code false} semantics (Ollama's
- * {@code think}) reacts itself; OpenAI simply omits the {@code reasoning} field.</p>
+ * <p>Provider mapping decides whether off is omitted or explicit. Ollama distinguishes unset
+ * {@code null} from resolved off: {@link #toOllamaThink(String)} maps off to {@code false}; OpenAI
+ * omits reasoning for off.</p>
  */
 public final class ThinkResolver {
 
@@ -88,7 +87,7 @@ public final class ThinkResolver {
 
     /**
      * Effective per-agent think string. Both strings empty = auto: {@code "true"} (heuristic marker)
-     * when enabled, {@code ""} (off) when disabled. Any string set = manual: the active string is
+     * when supported, {@code ""} (off) when unsupported. Any string set = manual: the active string is
      * used verbatim (empty active string = off), and the heuristic never applies.
      */
     public static String effectiveThink(boolean enabled, String on, String off) {
@@ -97,10 +96,10 @@ public final class ThinkResolver {
         return auto ? "" : StringUtil.stripToEmpty(off);
     }
 
-    /** Ollama {@code think} flag: {@code null} (omit) when empty; {@code FALSE} for an explicit off-token; else {@code TRUE}. */
+    /** Ollama {@code think} flag: {@code null} (omit) when unset; {@code FALSE} for off; else {@code TRUE}. */
     public static Boolean toOllamaThink(String think) {
+        if (think == null) return null;
         var v = norm(think);
-        if (v.isEmpty()) return null;
         return OFF.contains(v) ? Boolean.FALSE : Boolean.TRUE;
     }
     

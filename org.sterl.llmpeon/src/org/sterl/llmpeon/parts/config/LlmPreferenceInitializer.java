@@ -43,11 +43,11 @@ public class LlmPreferenceInitializer extends AbstractPreferenceInitializer {
         
         defaults.putInt(PeonConstants.PREF_MAX_TOKENS, 0);
         defaults.putInt(PeonConstants.PREF_TOKEN_WINDOW, DEFAULT.getAutoCompactAfter());
-        defaults.putBoolean(PeonConstants.PREF_THINKING_ENABLED, DEFAULT.isThinkEnabled());
+        defaults.putBoolean(PeonConstants.PREF_THINK_SUPPORTED, DEFAULT.isThinkSupported());
         defaults.putBoolean(PeonConstants.PREF_SEND_THINKING_ENABLED, DEFAULT.isSendThinkingEnabled());
         defaults.put(PeonConstants.PREF_THINK_ON_STRING, "");
         defaults.put(PeonConstants.PREF_THINK_OFF_STRING, "");
-        defaults.putBoolean(PeonConstants.PREF_PLAN_THINK_ENABLED, DEFAULT.isPlanThinkEnabled());
+        defaults.putBoolean(PeonConstants.PREF_PLAN_THINK_SUPPORTED, DEFAULT.isPlanThinkSupported());
         defaults.put(PeonConstants.PREF_PLAN_THINK_ON_STRING, "");
         defaults.put(PeonConstants.PREF_PLAN_THINK_OFF_STRING, "");
         defaults.put(PeonConstants.PREF_API_KEY, StringUtil.stripToEmpty(DEFAULT.getApiKey()));
@@ -83,11 +83,11 @@ public class LlmPreferenceInitializer extends AbstractPreferenceInitializer {
             .autoCompactAfter(prefs.getInt(PeonConstants.PREF_TOKEN_WINDOW, DEFAULT.getAutoCompactAfter()))
             .maxTokens(prefs.getInt(PeonConstants.PREF_MAX_TOKENS, 0))
 
-            .thinkEnabled(prefs.getBoolean(PeonConstants.PREF_THINKING_ENABLED, false))
+            .thinkSupported(prefs.getBoolean(PeonConstants.PREF_THINK_SUPPORTED, false))
             .sendThinkingEnabled(prefs.getBoolean(PeonConstants.PREF_SEND_THINKING_ENABLED, DEFAULT.isSendThinkingEnabled()))
             .thinkOnString(StringUtil.stripToNull(prefs.get(PeonConstants.PREF_THINK_ON_STRING, null)))
             .thinkOffString(StringUtil.stripToNull(prefs.get(PeonConstants.PREF_THINK_OFF_STRING, null)))
-            .planThinkEnabled(prefs.getBoolean(PeonConstants.PREF_PLAN_THINK_ENABLED, false))
+            .planThinkSupported(prefs.getBoolean(PeonConstants.PREF_PLAN_THINK_SUPPORTED, false))
             .planThinkOnString(StringUtil.stripToNull(prefs.get(PeonConstants.PREF_PLAN_THINK_ON_STRING, null)))
             .planThinkOffString(StringUtil.stripToNull(prefs.get(PeonConstants.PREF_PLAN_THINK_OFF_STRING, null)))
             .apiKey(prefs.get(PeonConstants.PREF_API_KEY, ""))
@@ -135,26 +135,26 @@ public class LlmPreferenceInitializer extends AbstractPreferenceInitializer {
         }
     }
 
-    /** Persist the brain-toggle state for the given agent. Returns true if a Dev/Plan pref changed. */
-    public static boolean saveThinkEnabled(boolean enabled, AiAgent agent) {
+    /** Persist thinking support for the given agent. Returns true if a Dev/Plan pref changed. */
+    public static boolean saveThinkSupported(boolean supported, AiAgent agent) {
         try {
             if (agent instanceof AiDevAgent) {
                 var prefs = InstanceScope.INSTANCE.getNode(PeonConstants.PLUGIN_ID);
-                prefs.putBoolean(PeonConstants.PREF_THINKING_ENABLED, enabled);
+                prefs.putBoolean(PeonConstants.PREF_THINK_SUPPORTED, supported);
                 prefs.flush();
                 return true;
             } else if (agent instanceof AiPlanAgent) {
                 var prefs = InstanceScope.INSTANCE.getNode(PeonConstants.PLUGIN_ID);
-                prefs.putBoolean(PeonConstants.PREF_PLAN_THINK_ENABLED, enabled);
+                prefs.putBoolean(PeonConstants.PREF_PLAN_THINK_SUPPORTED, supported);
                 prefs.flush();
                 return true;
             } else if (agent instanceof org.sterl.llmpeon.agent.CustomAgent custom) {
                 custom.migrateIfNeeded();
-                custom.getAgentFile().setValue(org.sterl.llmpeon.agent.CustomAgent.THINK_SUPPORTED, String.valueOf(enabled));
+                custom.getAgentFile().setValue(org.sterl.llmpeon.agent.CustomAgent.THINK_SUPPORTED, String.valueOf(supported));
                 custom.getAgentFile().save();
             }
         } catch (Exception e) {
-            LOG.warn("Failed to save think enabled", e);
+            LOG.warn("Failed to save think support", e);
         }
         return false;
     }

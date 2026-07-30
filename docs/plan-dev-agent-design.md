@@ -15,7 +15,7 @@ graph LR
 
 ### Flow
 
-1. **Planning phase**: `AiPlanAgent` reads the project context and produces a structured plan in memory or saved to `plan.md`. Temperature: 0.3.
+1. **Planning phase**: `AiPlanAgent` reads the project context and produces a structured plan in memory or saved to `plan.md`. Temperature: configurable via the plan temperature preference.
 2. **Handoff decision**:
    - **Manual mode (default)**: A "Give Peon-Dev" button appears when the planning agent's work is complete. User clicks it → control transfers with context (last AI message + plan if saved).
 3. **Implementation phase**: `AiDevAgent` receives the plan and implements it.
@@ -49,8 +49,8 @@ Standing orders ensure the plan path + "Handover from Peon-Plan" directive survi
 
 | Agent | Temperature |
 |-------|-------------|
-| AiPlanAgent | 0.3 — deterministic for reliable structuring |
-| AiDevAgent | Configurable via `temperature:` frontmatter; defaults to global setting |
+| AiPlanAgent | Configurable via plan temperature preference |
+| AiDevAgent | Configurable via dev temperature preference |
 
 ---
 

@@ -63,9 +63,9 @@ public class ConfiguredChatModel {
         }
     }
 
-    public boolean withThinking(boolean enabled) {
-        if (config.isThinkingOn() == enabled) return false;
-        config = config.toBuilder().thinkEnabled(enabled).build();
+    public boolean withThinkSupported(boolean supported) {
+        if (config.isThinkSupported() == supported) return false;
+        config = config.toBuilder().thinkSupported(supported).build();
         chatModel.set(null); // rebuild (returnThinking is build-time)
         return true;
     }

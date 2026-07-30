@@ -12,7 +12,7 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 * [Interaction Design](interaction-design.md) - the chat view layout: history, input block, action bar and status line.
 * [Plan & Dev Agent](plan-dev-agent-design.md) - the two-phase plan→dev handoff model and its planned pipeline features.
 * [Model Loading](model-loading.md) - model list lifecycle: lazy fetch, persistence across agent switches, fallback on failure.
-* [Per-Agent Think Toggle](per-agent-think.md) - per-request think resolution via provider mapping files and AGENT.md frontmatter.
+* [Per-Agent Think Support](per-agent-think.md) - per-agent thinking support and request-value resolution via provider mapping files and AGENT.md frontmatter.
 * [Queued User Messages](queued-user-messages.md) - input queue with batching, FIFO consumption, drain-to-memory on abort.
 * [Session Token Usage](token-usage.md) - cumulative ↑/↓ token spend in the header, fed from the StreamingBridge choke point.
 * [Scaffold Agent](scaffold-agent.md) - built-in agent for creating/editing Peon config artifacts (agents, skills, commands) with config-scoped disk tools.
@@ -21,6 +21,7 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 * [Agent-Specific AGENTS-<agent>.md](agent-specific-agentsmd.md) - AGENTS-<agent>.md: agent name resolution, case-insensitive fallback, deduplication.
 * [SWT Integrated Input Buttons](swt-integrated-input-buttons.md) - flat icon buttons beside a `StyledText` that read as one white field on macOS + Windows.
 * [Ask User Tool](user-question-tool-design.md) - the LLM pausing mid-task to ask a clarifying question inline in the chat.
+* [Persistent Agent History](persistent-agent-history.md) - JSONL chat history persistence for Dev, Plan and custom agents.
 
 ## Notes
 

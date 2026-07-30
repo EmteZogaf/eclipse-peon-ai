@@ -5,19 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.sterl.llmpeon.AbstractMemoryFileTest;
-import org.sterl.llmpeon.agent.CustomAgent;
 import org.sterl.llmpeon.ai.ConfiguredChatModel;
 import org.sterl.llmpeon.ai.LlmConfig;
-import org.sterl.llmpeon.ai.model.AiModel;
 import org.sterl.llmpeon.prompt.PromptLoader;
 import org.sterl.llmpeon.prompt.PromptYmlParser;
-import org.sterl.llmpeon.prompt.model.SimplePromptFile;
 import org.sterl.llmpeon.tool.SmartTool;
 import org.sterl.llmpeon.tool.ToolLoopRequest;
 import org.sterl.llmpeon.tool.ToolService;
@@ -172,6 +167,18 @@ class CustomAgentServiceTest extends AbstractMemoryFileTest {
     }
 
     @Test
+    void thinkSupportedCanonicalReadsCorrectly() throws Exception {
+        var file = tmp.resolve("AGENT.md");
+        Files.writeString(file, "---\nname: t\nthink_supported: true\nthink_on_string: high\n---\nbody");
+
+        var agent = newAgent(file);
+
+        assertThat(agent.isThinkSupported()).isTrue();
+        assertThat(agent.getConfig().getThink()).isEqualTo("high");
+    }
+
+
+    @Test
     void legacyKeysNotMigratedOnLoadOnlyOnWrite() throws Exception {
         // GIVEN an AGENT.md with legacy `think_enabled: true` in frontmatter
         var file = tmp.resolve("AGENT.md");
@@ -185,7 +192,7 @@ class CustomAgentServiceTest extends AbstractMemoryFileTest {
         String afterLoad = Files.readString(file);
         assertThat(afterLoad).isEqualTo(original);
         // AND the agent still reads the legacy key correctly
-        assertThat(agent.isThinkEnabled()).isTrue();
+        assertThat(agent.isThinkSupported()).isTrue();
     }
 
     @Test
@@ -218,7 +225,7 @@ class CustomAgentServiceTest extends AbstractMemoryFileTest {
 
         // THEN the legacy key is read correctly via backward compat
         assertThat(agent.getConfig().getThink()).isEqualTo("high");
-        assertThat(agent.isThinkEnabled()).isTrue();
+        assertThat(agent.isThinkSupported()).isTrue();
     }
 
     @Test
@@ -248,7 +255,7 @@ class CustomAgentServiceTest extends AbstractMemoryFileTest {
         var agent = newAgent(file);
 
         // THEN the legacy key is read correctly via backward compat
-        assertThat(agent.isThinkEnabled()).isTrue();
+        assertThat(agent.isThinkSupported()).isTrue();
     }
 
     @Test

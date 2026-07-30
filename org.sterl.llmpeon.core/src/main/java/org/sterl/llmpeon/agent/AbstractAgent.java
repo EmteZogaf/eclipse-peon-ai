@@ -1,5 +1,6 @@
 package org.sterl.llmpeon.agent;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import lombok.Getter;
 public abstract class AbstractAgent implements AiAgent {
 
     @Getter
-    protected final ThreadSafeMemory memory = new ThreadSafeMemory();
+    protected final ThreadSafeMemory memory;
     protected final ConfiguredChatModel configuredModel;
 
     protected final ToolService toolService;
@@ -44,14 +45,29 @@ public abstract class AbstractAgent implements AiAgent {
     private final LinkedHashSet<String> userContextInformations = new LinkedHashSet<>();
     
     protected AbstractAgent(ConfiguredChatModel configuredModel, ToolService toolService) {
+        this(configuredModel, toolService, new ThreadSafeMemory());
+    }
+
+    protected AbstractAgent(ConfiguredChatModel configuredModel, ToolService toolService, ThreadSafeMemory memory) {
         this.toolService = toolService;
         this.configuredModel = configuredModel;
+        this.memory = Objects.requireNonNull(memory, "ThreadSafeMemory cannot be null");
         
         Objects.requireNonNull(this.configuredModel, "ConfiguredChatModel cannot be null");
         Objects.requireNonNull(this.toolService, "ToolService cannot be null");
     }
 
     public abstract Double getTemperature();
+
+    protected static Path historyFile(Path configDir, String agentName) {
+        return configDir.resolve("state").resolve(safeAgentName(agentName) + "-history.jsonl");
+    }
+
+    private static String safeAgentName(String agentName) {
+        if (agentName == null || agentName.isBlank()) return "_agent";
+        var safe = agentName.replaceAll("[^A-Za-z0-9._-]", "_");
+        return safe.isBlank() ? "_agent" : safe;
+    }
 
     /**
      * Per-agent {@link AgentConfig} used for every request of this agent (provider, model, think,
@@ -61,10 +77,10 @@ public abstract class AbstractAgent implements AiAgent {
         return configuredModel.getConfig().devAgentConfig();
     }
 
-    /** Dev == GLOBAL == DEFAULT: the base think slot. Plan/Custom override. */
+    /** Dev/default model thinking support. Plan/Custom override. */
     @Override
-    public boolean isThinkEnabled() {
-        return configuredModel.getConfig().isThinkingOn();
+    public boolean isThinkSupported() {
+        return configuredModel.getConfig().isThinkSupported();
     }
 
     /**

@@ -67,18 +67,18 @@ public class LlmConfig {
      */
     @Default
     private final int maxTokens = 0;
-    /** Dev == GLOBAL == DEFAULT think on/off. Boolean; drives build-time thinking too. */
+    /** Dev/default model capability. Also drives build-time thinking config where providers require it. */
     @Default
-    private final boolean thinkEnabled = false;
+    private final boolean thinkSupported = false;
     /** Dev on-value. Empty -&gt; auto (heuristic). Setting on or off puts the agent in manual mode. */
     @Default
     private final String thinkOnString = null;
-    /** Dev off-value. Empty -&gt; send nothing. */
+    /** Dev off-value. Empty means provider default, except Ollama maps resolved off to {@code think:false}. */
     @Default
     private final String thinkOffString = null;
-    /** Plan think on/off. */
+    /** Plan model capability. */
     @Default
-    private final boolean planThinkEnabled = false;
+    private final boolean planThinkSupported = false;
     @Default
     private final String planThinkOnString = null;
     @Default
@@ -102,14 +102,14 @@ public class LlmConfig {
     @Default
     private final Map<String, String> headerParams = new LinkedHashMap<>();
     
-    /** Dev/global think on (drives build-time thinking for Gemini/Mistral and returnThinking). */
-    public boolean isThinkingOn() {
-        return thinkEnabled;
+    /** Dev/default model thinking support (drives build-time thinking for Gemini/Mistral and returnThinking). */
+    public boolean isThinkSupported() {
+        return thinkSupported;
     }
 
-    /** Return + show the model's own thinking. On when thinking is on OR send-back is on. */
+    /** Return + show the model's own thinking when supported or transport resend is on. */
     public boolean shouldReturnThinking() {
-        return thinkEnabled || sendThinkingEnabled;
+        return thinkSupported || sendThinkingEnabled;
     }
 
     /** Resend prior thinking to the model. */
@@ -162,15 +162,15 @@ public class LlmConfig {
     /** Dev agent (default model) — uses the dev think slot ({@code DEV == GLOBAL == DEFAULT}). */
     public AgentConfig devAgentConfig() {
         return baseAgentConfig().model(model)
-                .think(ThinkResolver.effectiveThink(thinkEnabled, thinkOnString, thinkOffString))
+                .think(ThinkResolver.effectiveThink(thinkSupported, thinkOnString, thinkOffString))
                 .temperature(devTemperature).build();
     }
 
-    /** Plan agent — its own think slot; {@link #planModel} (null = provider default) and the dev temperature. */
+    /** Plan agent — its own think slot; {@link #planModel} (null = provider default) and plan temperature. */
     public AgentConfig planAgentConfig() {
         return baseAgentConfig().model(planModel)
-                .think(ThinkResolver.effectiveThink(planThinkEnabled, planThinkOnString, planThinkOffString))
-                .temperature(devTemperature).build();
+                .think(ThinkResolver.effectiveThink(planThinkSupported, planThinkOnString, planThinkOffString))
+                .temperature(planTemperature).build();
     }
 
     /** Compactor — never thinks (nothing sent). Mirrors {@link org.sterl.llmpeon.agent.AiCompressorAgent}'s temperature. */
@@ -186,9 +186,9 @@ public class LlmConfig {
     }
 
     /** Custom agent — think from its own {@code AGENT.md} frontmatter (no inheritance), provider/url/key from here. */
-    public AgentConfig customAgentConfig(String agentModel, boolean enabled, String on, String off, Double temperature) {
+    public AgentConfig customAgentConfig(String agentModel, boolean supported, String on, String off, Double temperature) {
         return baseAgentConfig().model(agentModel)
-                .think(ThinkResolver.effectiveThink(enabled, on, off))
+                .think(ThinkResolver.effectiveThink(supported, on, off))
                 .temperature(temperature).build();
     }
 
