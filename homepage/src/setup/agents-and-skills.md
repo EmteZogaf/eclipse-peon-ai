@@ -21,9 +21,9 @@ Use it for project-specific stuff:
 - Important conventions or constraints
 - Links to relevant specs or docs
 
-## AGENTS-<agent>.md — Agent-Specific Rules
+## AGENTS-&lt;agent&gt;.md — Agent-Specific Rules
 
-For rules that apply only to a specific agent, create an `AGENTS-<agent>.md` file alongside
+For rules that apply only to a specific agent, create an `AGENTS-&lt;agent&gt;.md` file alongside
 your `AGENTS.md`. Both files are loaded when that agent is active.
 
 | Agent | File | Example |
@@ -39,7 +39,7 @@ The agent name key is derived from the agent's display name:
 The file name is case-insensitive with fallbacks: `AGENTS-DEV.md` is tried first, then
 `AGENTS-dev.md`, then title case and hyphenated variants.
 
-**Deduplication:** if both AGENTS.md and AGENTS-<agent>.md contain the same text, it appears
+**Deduplication:** if both AGENTS.md and AGENTS-&lt;agent&gt;.md contain the same text, it appears
 only once in the standing orders.
 
 **Agent switching:** the right file is loaded automatically when you switch agents — no restart needed.
