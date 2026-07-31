@@ -39,17 +39,21 @@ public class SmartToolExecutor {
             return executor.execute(request, request.id());
         } catch (IllegalArgumentException e) {
             var msg = e.getMessage();
-            if (msg != null && msg.length() > 200) msg = msg.substring(0, 180) + "...";
-            req.getMonitor().onProblem(request.name() + ": " + msg);
+            reportProblem(request, req, msg);
             return e.getMessage();
         } catch (ToolExecutionException e) {
             if (e.getCause() instanceof IllegalArgumentException ex) {
-                req.getMonitor().onProblem(request.name() + ": " + ex.getMessage());
+                reportProblem(request, req, ex.getMessage());
                 return ex.getMessage();
             }
             throw e;
         } finally {
             tool.withToolRequest(null);
         }
+    }
+    private void reportProblem(ToolExecutionRequest request,
+            ToolLoopRequest req, String msg) {
+        if (msg != null && msg.length() > 200) msg = msg.substring(0, 180) + "...";
+        req.getMonitor().onProblem(request.name() + ": " + msg);
     }
 }
