@@ -686,6 +686,9 @@ public class AIChatView implements EclipseAiMonitor {
         EclipseUtil.runInUiThread(parent, () -> {
             // Queue drain on abort is handled in core by AbstractAgent.handleAbortAndDrain() — ADR-0017
             lockWhileWorking(false);
+            actionsBar.updateCompact(
+                    aiService.getActiveAgent().getMemory().getTotalTokenUsed(), 
+                    aiService.getConfig().getAutoCompactAfter());
         });
     }
     

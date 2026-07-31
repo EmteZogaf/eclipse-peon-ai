@@ -59,7 +59,7 @@ public class AiCompressorAgent {
     String toText(ChatMessage msg) {
         var result = new StringBuilder();
         result.append("\n").append(msg.type()).append(":\n");
-        result.append(ChatMessageUtil.toString(msg, false, 5000));
+        result.append(ChatMessageUtil.toString(msg, false, 2500));
         return result.toString();
     }
 }

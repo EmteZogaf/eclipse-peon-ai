@@ -139,18 +139,20 @@ public class ActionsBarWidget extends Composite {
     
     /** Update the Compact button label and tooltip with current token usage. */
     public void updateCompact(int tokenUsed, int tokenMax) {
+        if (tokenMax <= 0) tokenMax = 999999;
+
         int pct = tokenMax > 0 ? (tokenUsed * 100) / tokenMax : 0;
         if (pct >= 85) btnCompact.setForeground(colorError);
         else if (pct >= 70) btnCompact.setForeground(colorWarning);
         else btnCompact.setForeground(null);
 
+        btnCompact.setText(StringUtil.toK(tokenUsed) + "/" + StringUtil.toK(tokenMax));
+        btnCompact.setToolTipText(pct+ "% used, " 
+                + StringUtil.toK(tokenUsed) + "/" + StringUtil.toK(tokenMax) + " — click to compact the conversation");
         if (tokenUsed < 1000) {
             btnCompact.setEnabled(false);
         } else {
             btnCompact.setEnabled(!working);
-            btnCompact.setText(StringUtil.toK(tokenUsed) + "/" + StringUtil.toK(tokenMax));
-            btnCompact.setToolTipText(pct+ "% used, " 
-                    + StringUtil.toK(tokenUsed) + "/" + StringUtil.toK(tokenMax) + " — click to compact the conversation");
             btnCompact.getParent().layout(false, false);
         }
 
