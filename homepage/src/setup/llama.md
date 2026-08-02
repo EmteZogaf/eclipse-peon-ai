@@ -28,6 +28,8 @@ Placeholders used:
 
 ### Start Server (OpenAI-compatible API)
 
+Consider using https://huggingface.co/froggeric/Qwen-Fixed-Chat-Templates
+
 #### `Qwen3.6-27B` sample
 
 
@@ -91,11 +93,12 @@ llama-server.exe `
   --reasoning-preserve `
   --chat-template-kwargs '{\"preserve_thinking\": true}' `
   --jinja `
+  --chat-template-file qwen-fixed.jinja ` 
   --host 0.0.0.0 `
   --port 1234 `
   --spec-type draft-mtp `
-  --spec-draft-n-max 3 `
-  --spec-draft-p-min 0.6
+  --spec-draft-n-max 4 `
+  --spec-draft-p-min 0.8
 ```
 
 ### Qwopus3.6-27B
@@ -128,11 +131,12 @@ llama-server.exe `
   --reasoning-preserve `
   --chat-template-kwargs '{\"preserve_thinking\": true}' `
   --jinja `
+  --chat-template-file qwen-fixed.jinja ` 
   --host 0.0.0.0 `
   --port 1234 `
   --spec-type draft-mtp `
-  --spec-draft-n-max 3 `
-  --spec-draft-p-min 0.7
+  --spec-draft-n-max 4 `
+  --spec-draft-p-min 0.8
 ```
 
 #### Ornith
@@ -156,17 +160,19 @@ llama-server.exe `
   --kv-unified `
   -b 2048 `
   -ub 1024 `
+  -np 1 `
+  --top-p 0.95 `
+  --top-k 20 `
+  --host 0.0.0.0 `
+  --port 1234 `
   --cache-prompt `
   --ctx-checkpoints 64 `
   --reasoning-preserve `
   --chat-template-kwargs '{\"preserve_thinking\": true}' `
   --cache-reuse 256 `
   --jinja `
-  -np 1 `
-  --top-p 0.95 `
-  --top-k 20 `
-  --host 0.0.0.0 `
-  --port 1234
+  --chat-template-file "qwen-fixed.jinja"
+
 ```
 
 C:\Users\pauls\.lmstudio\models\unsloth\Ornith-1.0-35B-GGUF
