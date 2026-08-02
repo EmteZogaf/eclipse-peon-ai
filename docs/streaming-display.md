@@ -1,0 +1,103 @@
+# Streaming Response Display
+
+**Goal:** Eliminate flicker, repeated markdown parsing, and unbounded content growth during long THINK/AI responses by deferring heavy rendering to the final message insert and using a lightweight status-bar overlay for live progress.
+
+## Background
+
+The previous incremental rendering (`md.render(fullAccumulatedText)` on every chunk) caused:
+- DOM flicker on every chunk
+- O(n²) performance degradation (full MD parse per chunk)
+- Unbounded content growth ("black screen" for large THINK blocks)
+
+## Business Rules
+
+### R1 — Status bar shows elapsed time and throughput during streaming ✅
+
+The status bar displays elapsed time, current phase, and tokens/second.
+
+- **GIVEN** a streaming response is in progress **WHEN** a chunk arrives **THEN** `#live-status` shows `<elapsed>s | <phase>... | <tok/s>` where phase is `thinking`, `responding`, or `using tools`
+- **GIVEN** a streaming response has just started **WHEN** the START chunk arrives **THEN** `#live-status` shows `waiting for AI...`
+- **Tag:** unit (verify `ChatMarkdownWidget.updateRunningChunk` computes state string and tokPerSec)
+
+### R2 — Token count always visible in overlay preview ✅
+
+The second line of the overlay always shows the total tokens generated, even when live preview is disabled.
+
+- **GIVEN** a streaming response is in progress **WHEN** chunks arrive **THEN** the overlay preview shows `<N> tokens` at minimum
+- **GIVEN** `showRealtimeAiResponse` is disabled (default: enabled) **WHEN** THINK/ANSWER chunks arrive **THEN** the overlay shows `<N> tokens` (not the streamed text)
+- **GIVEN** a TOOL call is in progress **WHEN** chunks arrive **THEN** the overlay shows `<N> tokens`
+- **Tag:** unit (verify `updateRunningChunk` passes token count when `showRealtimeAiResponse` is false or type is TOOL)
+
+### R3 — Live text preview replaces token count when enabled ✅
+
+When `showRealtimeAiResponse` is enabled (default: `true`), the overlay shows the accumulated THINK or ANSWER text instead of the token count.
+
+- **GIVEN** `showRealtimeAiResponse` is enabled (default) **WHEN** THINK chunks arrive **THEN** the overlay shows the accumulated THINK text
+- **GIVEN** `showRealtimeAiResponse` is enabled (default) **WHEN** ANSWER chunks arrive **THEN** the overlay shows the accumulated ANSWER text
+- **GIVEN** `showRealtimeAiResponse` is enabled (default) **WHEN** a TOOL call is in progress **THEN** the overlay shows `<N> tokens` (no text to preview)
+- **Tag:** unit (verify `updateRunningChunk` passes accumulated text when `showRealtimeAiResponse` is true for THINK/ANSWER)
+
+### R4 — Overlay preview is bounded and auto-scrolls ✅
+
+The preview div doesn't grow unbounded; it scrolls internally to keep the latest text visible.
+
+- **GIVEN** a large response streams > 300px of text **WHEN** chunks arrive **THEN** `.live-chunk` stays within `max-height: 300px` and auto-scrolls to show the latest text
+- **Tag:** CSS/behavior verification (manual + CSS inspection: `.live-chunk { max-height: 300px; overflow-y: auto; }`)
+
+### R5 — Line endings rendered as HTML breaks in preview ✅
+
+Streamed text line endings are converted to `<br>` for correct display in the plain-text overlay.
+
+- **GIVEN** a streamed chunk contains `\n` or `\r\n` **WHEN** the overlay renders the text **THEN** line breaks are displayed as `<br>` elements
+- **Tag:** unit (verify JS `updateLiveResponse` calls `.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>')`)
+
+### R6 — THINK and AI messages appended once on completion ✅
+
+THINK and AI messages are inserted into the chat exactly once when `onChatResponse` fires, with full markdown highlighting.
+
+- **GIVEN** a response with thinking content **WHEN** `onChatResponse` is called with a THINK message **THEN** the message is appended to the chat with MD rendering
+- **GIVEN** `showRealtimeAiResponse` is enabled or disabled **WHEN** `onChatResponse` is called with an AI message **THEN** the message is appended to the chat with MD rendering
+- **Tag:** unit (verify `AIChatView.onChatResponse` always calls `appendMessage` for THINK/AI, no suppression logic)
+
+### R7 — No duplicate messages ✅
+
+The chat history contains exactly one THINK and one AI message per tool-loop response.
+
+- **GIVEN** a response with thinking and answer **WHEN** streaming completes and `onChatResponse` fires **THEN** the chat has one THINK + one AI message (not two of each)
+- **Tag:** integration (verify no incremental JS functions insert messages during streaming)
+
+### R8 — Status bar hides on END ✅
+
+The live status bar (including preview) is hidden when streaming ends.
+
+- **GIVEN** the overlay is visible during streaming **WHEN** a streaming chunk with type END arrives **THEN** `hideLiveStatus()` is called and the overlay disappears
+- **Tag:** unit (verify `ChatMarkdownWidget.onStreamingChunk` calls `hideLiveStatus` on END)
+
+### R9 — Status bar hides on final message append ✅
+
+The live status bar is hidden when a final message is appended to the chat.
+
+- **GIVEN** the overlay is visible during streaming **WHEN** `appendMessage` is called for a non-TOOL message **THEN** `hideLiveStatus()` is called before the message is appended
+- **Tag:** unit (verify JS `appendMessage` calls `hideLiveStatus()` at the start)
+
+### R10 — Page scrolls to bottom when live preview first appears ✅
+
+When the live preview overlay becomes visible after a message was appended, the page scrolls to the bottom so the latest message is fully visible.
+
+- **GIVEN** a message was just appended and the page scrolled to bottom **WHEN** the live preview overlay becomes visible **THEN** the page scrolls to bottom again to show the overlay
+- **GIVEN** the live preview is already visible **WHEN** new chunks arrive **THEN** the page does not scroll (only the chunk div auto-scrolls)
+- **Tag:** unit (verify JS `updateLiveResponse` tracks `wasHidden` and scrolls only when transitioning from hidden to visible)
+
+### R11 — No incremental message updates during streaming ✅
+
+No messages are inserted into the chat during streaming; all rendering happens once on completion.
+
+- **GIVEN** a streaming response is in progress **WHEN** THINK or ANSWER chunks arrive **THEN** no new messages are added to the chat container (only the overlay is updated)
+- **Tag:** unit (verify `updateLastThinkingMessage` and `updateLastAnsweringMessage` no longer exist in chat.html)
+
+### R12 — Accumulators reset on new streaming session ✅
+
+The THINK and ANSWER text accumulators are cleared when a new streaming session starts.
+
+- **GIVEN** a previous streaming session accumulated text **WHEN** a new START chunk arrives **THEN** both `thinkText` and `answerText` accumulators are cleared
+- **Tag:** unit (verify `ChatMarkdownWidget.updateRunningChunk` calls `setLength(0)` on START)

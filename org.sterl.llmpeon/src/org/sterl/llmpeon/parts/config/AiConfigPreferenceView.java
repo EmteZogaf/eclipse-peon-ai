@@ -47,11 +47,13 @@ public class AiConfigPreferenceView extends FieldEditorPreferencePage implements
                 getFieldEditorParent());
         addField(providerEditor);
         addField(new StringFieldEditor(PeonConstants.PREF_MODEL, "Model:", getFieldEditorParent()));
+        
+        addField(new DoubleSliderFieldEditor(PeonConstants.PREF_PLAN_TEMPERATURE, "Plan temperature:", getFieldEditorParent()));
+        addField(new DoubleSliderFieldEditor(PeonConstants.PREF_DEV_TEMPERATURE,  "Dev temperature:", getFieldEditorParent()));
 
         addField(new IntegerFieldEditor(PeonConstants.PREF_TOKEN_WINDOW, "Auto compact after:", getFieldEditorParent()));
 
-        addField(new BooleanFieldEditor(PeonConstants.PREF_THINK_SUPPORTED,
-                "Default model supports thinking", getFieldEditorParent()));
+        addField(new BooleanFieldEditor(PeonConstants.PREF_THINK_SUPPORTED, "Default model supports thinking", getFieldEditorParent()));
         addField(new BooleanFieldEditor(PeonConstants.PREF_SEND_THINKING_ENABLED,
                 "Show and resend model thinking - needed by some LLMs like Qwen 3.6, Mistral, DeepSeek", getFieldEditorParent()));
 

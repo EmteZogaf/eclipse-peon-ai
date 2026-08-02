@@ -398,16 +398,13 @@ public class PeonAiService implements MessageProvider {
 
         var agent = getActiveAgent();
         if (agent instanceof AiPlanAgent planAgent) {
+            if (this.plan == null) this.plan = getProject().getFile(PlanTool.OVERVIEW_FILE);
+
             if (planAgent.getMemory().size() == 0) {
-                this.plan = getProject().getFile(PlanTool.OVERVIEW_FILE);
                 planAgent.getMemory().add(UserMessage.from(
                         "Current active plan. Use plan* tools to change" + System.lineSeparator() + "---" + System.lineSeparator() + System.lineSeparator()
                         + planTool.planRead()));
             }
-        } else if (agent.getMemory().size() == 0) {
-            agent.getMemory().add(UserMessage.from(
-                    "Plan found: " + JdtUtil.pathOf(getProject().getFile(PlanTool.OVERVIEW_FILE)) + System.lineSeparator()
-                    + "If plan* tools are available accessable by them too."));
         }
     }
 
@@ -467,12 +464,19 @@ public class PeonAiService implements MessageProvider {
             }
             result.add(orders.toString());
             orders.setLength(0);
+            
+            return result;
+        }
 
-        } else if (_handoffLine != null) {
+        if (_handoffLine != null) {
              // Consume handoff line once (set by onHandoff, survives compaction)
-            var line = _handoffLine;
+            result.add(_handoffLine);
             _handoffLine = null;
-            return List.of(line);
+        }
+
+        if (planTool.hasPlan()) {
+            result.add("Plan found: " + JdtUtil.pathOf(getProject().getFile(PlanTool.OVERVIEW_FILE)) + System.lineSeparator()
+                    + "If plan* tools are available accessable by them too.");
         }
         return result;
 

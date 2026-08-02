@@ -162,6 +162,8 @@
             color: #7a9aa4;
             font-style: italic;
             word-break: break-word;
+            max-height: 300px;
+            overflow-y: auto;
         }
         
         .live-chunk::after {
@@ -251,55 +253,7 @@
             window.scrollTo(0, document.body.scrollHeight);
         }
 
-		function updateLastThinkingMessage(messagePart) {
-		    const container = document.getElementById("chat");
-		    const lastMessage = container.lastElementChild;
-		    const delta = messagePart ?? "";
-		    
-		    if (lastMessage && lastMessage.classList.contains('THINK')) {
-		        const existing = lastMessage.dataset.raw || "";
-		        const updated = existing + delta;
-		        lastMessage.dataset.raw = updated;
-		        const contentDiv = lastMessage.querySelector('.thinking-content');
-		        if (contentDiv) {
-		            contentDiv.innerHTML = md.render(updated);
-		        } else {
-		            lastMessage.innerHTML = '<div class="thinking-content">' + md.render(updated) + '</div>';
-		        }
-		    } else {
-		        const div = document.createElement("div");
-		        div.className = "message THINK";
-		        div.dataset.raw = delta;
-		        div.innerHTML = '<div class="thinking-content">' + md.render(delta) + '</div>';
-		        container.appendChild(div);
-		    }
-		    window.scrollTo(0, document.body.scrollHeight);
-		}
 
-		function updateLastAnsweringMessage(messagePart) {
-		    const container = document.getElementById("chat");
-		    const lastMessage = container.lastElementChild;
-		    const delta = messagePart ?? "";
-		    
-		    if (lastMessage && lastMessage.classList.contains('AI')) {
-		        const existing = lastMessage.dataset.raw || "";
-		        const updated = existing + delta;
-		        lastMessage.dataset.raw = updated;
-		        const contentDiv = lastMessage.querySelector('.message-content');
-		        if (contentDiv) {
-		            contentDiv.innerHTML = md.render(updated);
-		        } else {
-		            lastMessage.innerHTML = '<div class="message-content">' + md.render(updated) + '</div>';
-		        }
-		    } else {
-		        const div = document.createElement("div");
-		        div.className = "message AI";
-		        div.dataset.raw = delta;
-		        div.innerHTML = '<div class="message-content">' + md.render(delta) + '</div>';
-		        container.appendChild(div);
-		    }
-		    window.scrollTo(0, document.body.scrollHeight);
-		}
 
         function updateLiveResponse(stateMessage, tokPerSec, thinkChunk) {
             var el = document.getElementById("live-status");
@@ -309,11 +263,24 @@
                 document.body.appendChild(el);
             }
             var rate = tokPerSec > 0 ? " | " + tokPerSec.toFixed(1) + " tok/s" : "";
-            var chunk = thinkChunk && thinkChunk != "" && thinkChunk != "null" ? "<div class='live-chunk'>" + thinkChunk + "</div>" : "";
+            var textWithBr = (thinkChunk && thinkChunk !== "null")
+                ? thinkChunk.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>')
+                : "";
+            var chunk = textWithBr ? "<div class='live-chunk'>" + textWithBr + "</div>" : "";
             el.innerHTML = "<span class='live-state'>" + stateMessage + rate + "</span>" + chunk;
 
-            if (el.style.display !== "block") {
-                el.style.display = "block";
+            var wasHidden = (el.style.display !== "block");
+            el.style.display = "block";
+
+            if (textWithBr) {
+                var chunkEl = el.querySelector('.live-chunk');
+                if (chunkEl) {
+                    chunkEl.scrollTop = chunkEl.scrollHeight;
+                }
+            }
+
+            // Scroll page to bottom after live preview becomes visible
+            if (wasHidden) {
                 window.scrollTo(0, document.body.scrollHeight);
             }
         }
@@ -326,8 +293,6 @@
         function appendMessage(message) {
             hideLiveStatus();
             if (message.role === 'TOOL') {toolMessage(message.message); return;}
-            if (message.role === 'THINK') {updateLastThinkingMessage(message.message); return;}
-            if (message.role === 'ANSWER') {updateLastAnsweringMessage(message.message); return;}
             const container = document.getElementById("chat");
             const lastMessage = container.lastElementChild;
             if (lastMessage && lastMessage.classList.contains(message.role)) {

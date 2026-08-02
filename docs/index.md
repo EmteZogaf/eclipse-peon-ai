@@ -22,6 +22,7 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 * [SWT Integrated Input Buttons](swt-integrated-input-buttons.md) - flat icon buttons beside a `StyledText` that read as one white field on macOS + Windows.
 * [Ask User Tool](user-question-tool-design.md) - the LLM pausing mid-task to ask a clarifying question inline in the chat.
 * [Persistent Agent History](persistent-agent-history.md) - JSONL chat history persistence for Dev, Plan and custom agents.
+* [Streaming Response Display](streaming-display.md) - status-bar overlay with bounded live preview, single DOM insert on completion, no incremental chat rendering.
 
 ## Notes
 

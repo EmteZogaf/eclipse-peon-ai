@@ -43,6 +43,8 @@ public class ChatMarkdownWidget extends Composite {
     private final AtomicInteger streamingTokenCount = new AtomicInteger(0);
     private final Composite parent;
     private boolean showRealtimeAiResponse = false;
+    private final StringBuilder thinkText = new StringBuilder();
+    private final StringBuilder answerText = new StringBuilder();
     
     private volatile boolean browserReady = false;
     private final java.util.Queue<String> pendingExecutions = 
@@ -158,7 +160,7 @@ public class ChatMarkdownWidget extends Composite {
 
     public void onStreamingChunk(OnPartialAiResponse r) {
         int tokens = 0;
-        if (r.type() == Type.START || r.type() ==  Type.END) {
+        if (r.type() == Type.START || r.type() == Type.END) {
             streamingTokenCount.set(0);
         } else {
             tokens = streamingTokenCount.incrementAndGet();
@@ -167,35 +169,13 @@ public class ChatMarkdownWidget extends Composite {
         if (r.type() == Type.END) {
             EclipseUtil.runInUiThread(parent, this::hideLiveStatus);
         } else {
+            if (r.type() == Type.THINK) {
+                thinkText.append(r.value());
+            } else if (r.type() == Type.ANSWER) {
+                answerText.append(r.value());
+            }
             updateRunningChunk(r, tokens);
-            if (showRealtimeAiResponse) {
-                if (r.type() == Type.THINK) {
-                    updateThinkingMessageInUIThread(r.value());
-                } else if (r.type() == Type.ANSWER) {
-                    updateAnsweringMessageInUIThread(r.value());
-                }
-            }
         }
-    }
-
-    private void updateThinkingMessageInUIThread(String text) {
-        EclipseUtil.runInUiThread(parent, () -> {
-            try {
-                browser.execute("updateLastThinkingMessage(" + mapper.writeValueAsString(text) + ");");
-            } catch (Exception e) {
-                // ignore
-            }
-        });
-    }
-
-    private void updateAnsweringMessageInUIThread(String text) {
-        EclipseUtil.runInUiThread(parent, () -> {
-            try {
-                browser.execute("updateLastAnsweringMessage(" + mapper.writeValueAsString(text) + ");");
-            } catch (Exception e) {
-                // ignore
-            }
-        });
     }
 
     private void updateRunningChunk(OnPartialAiResponse r, int tokens) {
@@ -208,10 +188,19 @@ public class ChatMarkdownWidget extends Composite {
             case END     -> "AI done.";
         };
         if (r.type() == Type.START) {
+            thinkText.setLength(0);
+            answerText.setLength(0);
             updateLiveResponseInUIThread(state, 0, "");
-        } else if (tokens == 1 || (tokens > 0 && tokens % 20 == 0)) {
-            double tokPerSec = elapsed > 0 ? tokens / (double) elapsed : 0;
-            updateLiveResponseInUIThread(state, tokPerSec, tokens + " tokens generated");
+        } else {
+            String accumulatedText = switch (r.type()) {
+                case THINK -> showRealtimeAiResponse ? thinkText.toString() : tokens + " tokens";
+                case ANSWER -> showRealtimeAiResponse ? answerText.toString() : tokens + " tokens";
+                default -> tokens + " tokens";
+            };
+            if (tokens == 1 || (tokens > 0 && tokens % 20 == 0)) {
+                double tokPerSec = elapsed > 0 ? tokens / (double) elapsed : 0;
+                updateLiveResponseInUIThread(state, tokPerSec, accumulatedText);
+            }
         }
     }
     

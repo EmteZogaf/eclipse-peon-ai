@@ -320,10 +320,7 @@ public class AIChatView implements EclipseAiMonitor {
                 chatHistory.hideLiveStatus();
             }
 
-            // show message, but suppress live updated message when it is already shown
-            if ((m.role() != SimpleMessage.Type.THINK && m.role() != SimpleMessage.Type.AI) || !chatHistory.isShowRealtimeAiResponse()) {
-                chatHistory.appendMessage(m);
-            }
+            chatHistory.appendMessage(m);
             actionsBar.updateCompact(ai.getMemory().getTotalTokenUsed(), aiService.getConfig().getAutoCompactAfter());
         });
     }
