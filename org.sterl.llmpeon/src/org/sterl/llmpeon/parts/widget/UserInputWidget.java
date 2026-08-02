@@ -64,6 +64,7 @@ public class UserInputWidget extends Composite {
         // setting StyledText's background is what wakes up the paint chain so the
         // surrounding composite PaintListeners actually fire on resize.
         final Color bgWhite = getDisplay().getSystemColor(SWT.COLOR_WHITE);
+        setBackground(bgWhite);
 
         GridLayout outerLayout = new GridLayout(1, false);
         outerLayout.marginWidth = 0;
@@ -153,6 +154,7 @@ public class UserInputWidget extends Composite {
         GridData fillerData = new GridData(SWT.FILL, SWT.FILL, false, true);
         fillerData.heightHint = 0;
         filler.setLayoutData(fillerData);
+        filler.setBackground(bgWhite);
         // Stop button — hidden initially, shown when working (sits at top above filler)
         stopButton = SwtUtil.createIconButton(rightColumn, stopImage, "Stop current request");
         stopButton.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, false));

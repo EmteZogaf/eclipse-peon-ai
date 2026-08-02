@@ -50,7 +50,8 @@ public class TextInputWidget extends Composite {
         layout.marginHeight = 0;
         setLayout(layout);
 
-        styledText = new StyledText(this, SWT.MULTI | SWT.WRAP);
+        styledText = new StyledText(this, SWT.MULTI | SWT.WRAP | SWT.V_SCROLL);
+        styledText.setAlwaysShowScrollBars(false);
         GridData textData = new GridData(SWT.FILL, SWT.FILL, true, true);
         // Apply the minimum height up front so the field starts at minRows while still empty —
         // refreshHeight() only runs on edits (and bails while width == 0), so it can't do it.
