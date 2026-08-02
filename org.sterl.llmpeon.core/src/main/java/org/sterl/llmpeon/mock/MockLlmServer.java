@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.sterl.llmpeon.ai.AiProvider;
+import org.sterl.llmpeon.ai.LlmConfig;
 import org.sterl.llmpeon.mock.model.CapturedTool;
 import org.sterl.llmpeon.mock.model.ModelListResponse;
 import org.sterl.llmpeon.mock.model.SseChunk;
@@ -28,8 +32,10 @@ import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor
+@Slf4j
 public class MockLlmServer {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -60,18 +66,63 @@ public class MockLlmServer {
             }
         }
         try {
+        	long time = System.currentTimeMillis();
             server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/v1/chat/completions", this::handleChatCompletions);
             server.createContext("/v1/models", this::handleModels);
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
+            
+            while (!isAlive()) {
+            	if (System.currentTimeMillis() - time > 5_000) {
+            		throw new RuntimeException("Failed to start " + getClass().getSimpleName() + " after " + (System.currentTimeMillis() - time) + "ms");
+            	}
+            	try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					stop();
+					return;
+				}
+            }
+        	time = System.currentTimeMillis() - time;
+            log.info("LLM stub started on port={} after {}ms", server.getAddress().getPort(), time);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+    
+    public boolean isAlive() {
+        try (var s = new Socket("127.0.0.1", getPort())) {
+            return true; // server is accepting connections
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    
+    public LlmConfig newConfig(String model) {
+    	return LlmConfig.builder()
+    		.providerType(AiProvider.OPEN_AI)
+        	.model(model)
+        	.url(getUrl())
+        	.timeout(Duration.ofSeconds(30))
+    	    .build();
+    }
 
     public void stop() {
         if (server != null) server.stop(0);
+        server = null;
+    }
+
+
+    public void reset() {
+        responseQueue.clear();
+        capturedMessages.clear();
+        lastRequestBody.set(null);
+        modelIds = List.of("gpt-4o", "mock-model");
+        modelsEndpointError = false;
+        forceNonStreaming = false;
     }
 
     public int getPort() {
@@ -79,7 +130,7 @@ public class MockLlmServer {
     }
 
     public String getUrl() {
-        return "http://localhost:" + port + "/v1";
+        return "http://127.0.0.1:" + port + "/v1";
     }
 
     // -------------------------------------------------------------------------
@@ -188,38 +239,46 @@ public class MockLlmServer {
     // -------------------------------------------------------------------------
 
     private void handleChatCompletions(com.sun.net.httpserver.HttpExchange exchange) throws IOException {
-        if (!"POST".equals(exchange.getRequestMethod())) {
-            sendJson(exchange, 405, Map.of("error", "Method not allowed"));
-            return;
-        }
-
-        String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        lastRequestBody.set(requestBody);
-        captureMessages(requestBody);
-
-        Object queued = responseQueue.poll();
-        if (queued == null) queued = "No queued response - default mock answer";
-
-        var response = QueuedResponse.from(queued);
-        boolean stream = !forceNonStreaming && isStreaming(requestBody);
-
-        if (stream) {
-            handleStreaming(exchange, response);
-        } else {
-            handleNonStreaming(exchange, response);
-        }
+    	try {
+    		if (!"POST".equals(exchange.getRequestMethod())) {
+    			sendJson(exchange, 405, Map.of("error", "Method not allowed"));
+    			return;
+    		}
+    		
+    		String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+    		lastRequestBody.set(requestBody);
+    		captureMessages(requestBody);
+    		
+    		Object queued = responseQueue.poll();
+    		if (queued == null) queued = "No queued response - default mock answer";
+    		
+    		var response = QueuedResponse.from(queued);
+    		boolean stream = !forceNonStreaming && isStreaming(requestBody);
+    		
+    		if (stream) {
+    			handleStreaming(exchange, response);
+    		} else {
+    			handleNonStreaming(exchange, response);
+    		}
+    	} finally {
+			exchange.close();
+		}
     }
 
     private void handleModels(com.sun.net.httpserver.HttpExchange exchange) throws IOException {
-        if (!"GET".equals(exchange.getRequestMethod())) {
-            sendJson(exchange, 405, Map.of("error", "Method not allowed"));
-            return;
-        }
-        if (modelsEndpointError) {
-            sendRaw(exchange, 500, "{\"error\": \"Internal server error\"}");
-            return;
-        }
-        sendJson(exchange, 200, new ModelListResponse(modelIds));
+    	try {
+    		if (!"GET".equals(exchange.getRequestMethod())) {
+    			sendJson(exchange, 405, Map.of("error", "Method not allowed"));
+    			return;
+    		}
+    		if (modelsEndpointError) {
+    			sendRaw(exchange, 500, "{\"error\": \"Internal server error\"}");
+    			return;
+    		}
+    		sendJson(exchange, 200, new ModelListResponse(modelIds));
+    	} finally {
+			exchange.close();
+		}
     }
 
     // -------------------------------------------------------------------------

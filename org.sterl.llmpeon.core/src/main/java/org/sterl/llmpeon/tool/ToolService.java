@@ -23,6 +23,7 @@ import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.agent.tool.ToolSpecifications;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
@@ -156,7 +157,9 @@ public class ToolService {
             } else if (hasThink) {
                 // https://github.com/langchain4j/langchain4j/issues/4786
                 ++stuck;
-                req.getMemory().addResult(response);
+                // we cannot just add the message in this case as is
+                // -> "Assistant message must contain either 'content' or 'tool_calls'!","type":"invalid_request_error"
+                req.getMemory().add(AiMessage.from(response.aiMessage().thinking()));
                 req.monitor.onProblem("AI hangs - only thinking returned times: " + stuck);
                 if (stuck > MAX_STUCK_ITERATIONS) break;
                 if (stuck > MAX_STUCK_ITERATIONS - 2) addCompactHintIfNeeded(req, response, true);

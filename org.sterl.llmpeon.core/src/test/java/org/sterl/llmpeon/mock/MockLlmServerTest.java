@@ -1,6 +1,7 @@
 package org.sterl.llmpeon.mock;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -10,8 +11,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.sterl.llmpeon.ai.LlmConfig;
 
@@ -22,25 +23,23 @@ import dev.langchain4j.data.message.UserMessage;
 
 public class MockLlmServerTest {
 
-    private MockLlmServer server = new MockLlmServer();
-    private HttpClient client;
-    private int port;
+    private static MockLlmServer server = new MockLlmServer();
+    private static HttpClient client;
 
-    private static final Duration TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
-    @BeforeEach
-    void setUp() throws Exception {
+    @BeforeAll
+    static void setUp() throws Exception {
         server.start();
-        port = server.getPort();
+        client = HttpClient.newBuilder()
+        		.connectTimeout(TIMEOUT)
+        		.build();
         
-        // Wait briefly for server to be ready (HttpServer starts async)
-        Thread.sleep(100);
-        
-        client = HttpClient.newBuilder().connectTimeout(TIMEOUT).build();
+        assertTrue(server.isAlive());
     }
 
-    @AfterEach
-    void tearDown() {
+    @AfterAll
+    static void tearDown() {
         server.stop();
     }
 
@@ -53,7 +52,7 @@ public class MockLlmServerTest {
 
         var request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/chat/completions"))
+                .uri(URI.create(server.getUrl() + "/chat/completions"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers
                         .ofString("{\"stream\": false, \"messages\": [{\"role\": \"user\", \"content\": \"PING\"}]}"))
@@ -84,7 +83,7 @@ public class MockLlmServerTest {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/chat/completions"))
+                .uri(URI.create(server.getUrl() + "/chat/completions"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\"stream\": true}")).build();
 
@@ -106,7 +105,7 @@ public class MockLlmServerTest {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/chat/completions"))
+                .uri(URI.create(server.getUrl() + "/chat/completions"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString("{\"stream\": false}")).build();
 
@@ -126,7 +125,7 @@ public class MockLlmServerTest {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/models"))
+                .uri(URI.create(server.getUrl() + "/models"))
                 .GET()
                 .build();
 
@@ -148,7 +147,7 @@ public class MockLlmServerTest {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/models")).GET()
+                .uri(URI.create(server.getUrl() + "/models")).GET()
                 .build();
 
         // WHEN
@@ -165,7 +164,7 @@ public class MockLlmServerTest {
         // GIVEN
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/chat/completions")).GET()
+                .uri(URI.create(server.getUrl() + "/chat/completions")).GET()
                 .build();
 
         // WHEN
@@ -180,7 +179,7 @@ public class MockLlmServerTest {
         // GIVEN
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/models"))
+                .uri(URI.create(server.getUrl() + "/models"))
                 .POST(HttpRequest.BodyPublishers.ofString("{}")).build();
 
         // WHEN
@@ -200,7 +199,7 @@ public class MockLlmServerTest {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/chat/completions"))
+                .uri(URI.create(server.getUrl() + "/chat/completions"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(
                         "{\"stream\": false, \"messages\": [{\"role\": \"user\", \"content\": \"What's the weather?\"}]}"))
@@ -242,6 +241,7 @@ public class MockLlmServerTest {
     @Test
     void shouldCaptureToolMessages() throws Exception {
         // GIVEN
+    	server.reset();
         server.queueResponse("OK");
 
         String requestBody = "{\"stream\": false, \"messages\": ["
@@ -252,7 +252,7 @@ public class MockLlmServerTest {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .timeout(TIMEOUT)
-                .uri(URI.create("http://localhost:" + port + "/v1/chat/completions"))
+                .uri(URI.create(server.getUrl() + "/chat/completions"))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();

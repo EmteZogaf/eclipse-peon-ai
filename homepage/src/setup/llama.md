@@ -88,6 +88,7 @@ llama-server.exe `
   --top-p 0.95 `
   --top-k 20 `
   --min-p 0.0 `
+  --reasoning-preserve `
   --chat-template-kwargs '{\"preserve_thinking\": true}' `
   --jinja `
   --host 0.0.0.0 `
@@ -95,6 +96,43 @@ llama-server.exe `
   --spec-type draft-mtp `
   --spec-draft-n-max 3 `
   --spec-draft-p-min 0.6
+```
+
+### Qwopus3.6-27B
+
+IT IS CURRENTLY NOT STABLE!!!!
+
+```bat
+llama-server.exe `
+  -m "..\..\..\.lmstudio\models\Jackrong\Qwopus3.6-27B-v2-MTP-GGUF\Qwopus3.6-27B-v2-MTP-Q6_K.gguf" `
+  --alias "Qwen3.6-27B" `
+  -ngl 999 `
+  --prio 3 `
+  -ts 1,1 `
+  -sm layer `
+  -c 150000 `
+  -fa on `
+  -ctk q8_0 `
+  -ctv q8_0 `
+  --kv-unified `
+  -b 2048 `
+  -ub 1024 `
+  -np -1 `
+  --cache-reuse 256 `
+  --cache-ram 16000 `
+  --ctx-checkpoints 32 `
+  --temp 0.6 `
+  --top-p 0.95 `
+  --top-k 20 `
+  --min-p 0.0 `
+  --reasoning-preserve `
+  --chat-template-kwargs '{\"preserve_thinking\": true}' `
+  --jinja `
+  --host 0.0.0.0 `
+  --port 1234 `
+  --spec-type draft-mtp `
+  --spec-draft-n-max 3 `
+  --spec-draft-p-min 0.7
 ```
 
 #### Ornith
@@ -120,7 +158,8 @@ llama-server.exe `
   -ub 1024 `
   --cache-prompt `
   --ctx-checkpoints 64 `
-  --chat-template-kwargs "{\"preserve_thinking\": true}" `
+  --reasoning-preserve `
+  --chat-template-kwargs '{\"preserve_thinking\": true}' `
   --cache-reuse 256 `
   --jinja `
   -np 1 `
