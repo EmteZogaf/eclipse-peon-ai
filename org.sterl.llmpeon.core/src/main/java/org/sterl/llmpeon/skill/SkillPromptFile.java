@@ -55,7 +55,8 @@ public class SkillPromptFile extends SimplePromptFile {
             result.append("SKILL disk dir: ").append(skillDir).append(System.lineSeparator());
             try (var stream = Files.walk(skillDir)) {
                 stream.filter(Files::isRegularFile).forEach(p -> result
-                        .append(skillDir.relativize(p)).append(System.lineSeparator()));
+                        .append(FileUtils.normalizePath(skillDir.relativize(p).toString()))
+                        .append(System.lineSeparator()));
             } catch (java.io.IOException e) {
                 result.append("[unable to scan directory] ")
                       .append(e.getMessage()).append(System.lineSeparator());

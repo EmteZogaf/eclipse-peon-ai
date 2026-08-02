@@ -80,12 +80,12 @@ class ToolServiceTest {
         verify(cm, times(2)).chat(any(ChatRequest.class), any(StreamingChatResponseHandler.class));
         // AND
         var messages = memory.getCopy();
-        assertThat(messages.get(1)).isEqualTo(aiThinkMsg);
+        assertThat(messages.get(1)).isEqualTo(AiMessage.from("I think"));
         assertThat(((UserMessage)messages.get(2)).singleText()).contains("ask a clarifying question");
         assertThat(messages.get(3)).isEqualTo(aiResponse);
         // AND last request contains all our messages
         // 1 is the Hello
-        assertThat(requestRef.get().messages().get(1)).isEqualTo(aiThinkMsg);
+        assertThat(requestRef.get().messages().get(1)).isEqualTo(AiMessage.from("I think"));
         // 2 is the ask a question
     }
 

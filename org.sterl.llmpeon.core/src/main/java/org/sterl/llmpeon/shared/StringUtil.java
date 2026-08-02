@@ -8,7 +8,7 @@ public class StringUtil {
 	/** any /r/n -> /n */
 	public static String normelizeEndings(String value) {
 		if (value == null || value.isBlank()) return value;
-		return value.replace("/r/n", "/n");
+		return value.replace("\r\n", "\n");
 	}
     
     public static String getStackTrace(final Throwable throwable) {

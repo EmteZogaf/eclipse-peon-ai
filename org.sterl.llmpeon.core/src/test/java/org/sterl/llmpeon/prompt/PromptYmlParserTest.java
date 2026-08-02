@@ -46,11 +46,12 @@ class PromptYmlParserTest extends AbstractMemoryFileTest {
         assertThat(prompt.getName()).isEqualTo("review");
         assertThat(prompt.getDescription()).isEqualTo("Review changes");
         // AND
-        assertThat(prompt.getBody()).isEqualTo("""
-                body
-                and
-                even
-                more""");
+        assertThat(StringUtil.normelizeEndings(prompt.getBody()))
+                .isEqualTo(StringUtil.normelizeEndings("""
+                        body
+                        and
+                        even
+                        more"""));
     }
 
     @Test

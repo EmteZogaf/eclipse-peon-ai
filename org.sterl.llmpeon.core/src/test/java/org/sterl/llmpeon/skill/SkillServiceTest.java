@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sterl.llmpeon.AbstractMemoryFileTest;
 import org.sterl.llmpeon.prompt.PromptYmlParser;
+import org.sterl.llmpeon.shared.FileUtils;
 
 class SkillServiceTest extends AbstractMemoryFileTest {
 
@@ -54,7 +55,7 @@ class SkillServiceTest extends AbstractMemoryFileTest {
         assertThat(skill.getName()).isEqualTo("my-skill-name");
         assertThat(skill.getDescription()).isEqualTo("Does something useful");
         assertThat(skill.renderBody()).contains(Path.of("foo.md").toString());
-        assertThat(skill.renderBody()).contains(Path.of("bar", "baaar.md").toString());
+        assertThat(skill.renderBody()).contains(FileUtils.normalizePath(Path.of("bar", "baaar.md").toString()));
         
         // AND
         assertThat(skill.readRelativeFile(Path.of("foo.md").toString())).isEqualTo("Foo");
