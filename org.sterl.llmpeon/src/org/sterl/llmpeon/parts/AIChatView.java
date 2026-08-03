@@ -635,7 +635,7 @@ public class AIChatView implements EclipseAiMonitor {
             SlashResult r = result.get();
             standingOrders.addOneTimeOrder(r.body());
             chatHistory.appendMessage(new SimpleMessage(Type.TOOL,
-                    r.isSkill() ? "Using 📦: " + r.name() : "Using 🪄: " + r.name()));
+                    r.isSkill() ? "Using 🧩: " + r.name() : "Using 🪄: " + r.name()));
             trailing = StringUtil.hasValue(r.trailingText()) ? r.trailingText() : null;
             if (trailing != null) {
                 chatHistory.appendMessage(new SimpleMessage(Type.USER, trailing));

@@ -18,6 +18,7 @@ import org.sterl.llmpeon.agent.AiDevAgent;
 import org.sterl.llmpeon.agent.AiPlanAgent;
 import org.sterl.llmpeon.ai.AiProvider;
 import org.sterl.llmpeon.parts.PeonAiService;
+import org.sterl.llmpeon.parts.tools.EclipseWorkspaceWriteFileTool;
 import org.sterl.llmpeon.parts.tools.PlanTool;
 import org.sterl.llmpeon.scaffold.AiScaffoldAgent;
 import org.sterl.llmpeon.tool.tools.CompactSessionTool;
@@ -26,6 +27,7 @@ import org.sterl.llmpeon.tool.tools.DiskFileWriteTool;
 import org.sterl.llmpeon.tool.tools.DiskGrepTool;
 
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 
 public class PeonAiServiceTest extends AbstractTest {
@@ -55,6 +57,10 @@ public class PeonAiServiceTest extends AbstractTest {
         // GIVEN
         assumeTrue("Eclipse workspace not available", isWorkspaceAvailable());
         aiService.setActiveAgent(aiService.getAgents().stream().filter(a -> a.getName().equals(AiPlanAgent.NAME)).findFirst().orElseThrow());
+        // AND
+        aiService.getActiveAgent().getMemory().clear();
+        aiService.setProject(project);
+        aiService.getToolService().getTool(EclipseWorkspaceWriteFileTool.class).get().eclipseDeleteResource("peon-plan");
         
         // WHEN
         assertFalse(aiService.onHandoff());
@@ -102,7 +108,7 @@ public class PeonAiServiceTest extends AbstractTest {
         
         // THEN
         var msg = aiService.getActiveAgent().getMemory().getCopy();
-        assertEquals("Ping", ((UserMessage)msg.get(0)).singleText());
+        assertEquals("Ping", ((TextContent)((UserMessage)msg.get(0)).contents().getLast()).text());
         assertEquals("Pong", ((AiMessage)msg.get(1)).text());
     }
     
@@ -165,12 +171,12 @@ public class PeonAiServiceTest extends AbstractTest {
 
         // AND: first get() returns the handoff standing order
         var orders = aiService.get();
-        assertEquals(1, orders.size());
+        assertEquals(2, orders.size());
         assertContains(orders.get(0), "Handover from ");
 
-        // AND: second get() returns empty (handoff line consumed once)
+        // AND: second get() contains still the reference to the plan
         var orders2 = aiService.get();
-        assertTrue("second call should return empty after consumption", orders2.isEmpty());
+        assertContains(orders2.getFirst(), "peon-plan/overview.md");
     }
     
     @Test
