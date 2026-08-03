@@ -266,7 +266,9 @@ public class AIChatView implements EclipseAiMonitor {
         var selectionElement = EclipseUtil.selectionElement(o).orElse(null);
         if (selectionElement instanceof IClassFile classFile) userContext.setClassFile(classFile);
         var selection = EclipseUtil.resolveResource(selectionElement).orElse(null);
-        if (selection == null && selectionElement != null && !(selectionElement instanceof IWorkingSet)) {
+        if (selection == null && selectionElement != null && !(selectionElement instanceof IWorkingSet)
+                && !selectionElement.getClass().getName().equals("org.eclipse.ui.internal.views.log.LogEntry")
+                && aiService.getConfig().isDebugMode()) {
             LOG.info("Unknown resource type selected " + selectionElement.getClass());
         }
         userContext.setTextSelection(null);
