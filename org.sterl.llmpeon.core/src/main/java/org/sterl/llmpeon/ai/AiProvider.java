@@ -102,7 +102,7 @@ public enum AiProvider {
                     .apiKey(c.getApiKey())
                     .httpClientBuilder(http1)
                     .strictJsonSchema(true)
-                    .returnThinking(c.shouldReturnThinking())
+                    .returnThinking(true)
                     .sendThinking(c.shouldWeSendThinkingBackToLLM())
                     .customHeaders(c.getHeaderParams())
                     .customQueryParams(c.getQueryParams())
@@ -184,7 +184,7 @@ public enum AiProvider {
                     .modelName(c.getModel())
                     .apiKey(StringUtil.hasValue(c.getApiKey()) ? c.getApiKey() : "lm-studio")
                     .httpClientBuilder(http1)
-                    .returnThinking(c.shouldReturnThinking())
+                    .returnThinking(true)
                     .sendThinking(c.shouldWeSendThinkingBackToLLM())
                     .customHeaders(c.getHeaderParams())
                     .customQueryParams(c.getQueryParams())
@@ -228,13 +228,8 @@ public enum AiProvider {
             // langchain4j version, so thinking stays build-time via default model support.
             if (c.isThinkSupported()) {
                 var think = GeminiThinkingConfig.builder()
-                    .thinkingLevel(GeminiThinkingLevel.HIGH)
-                    .thinkingBudget(c.getMaxTokens() > 0 ? c.getMaxTokens() : 4096);
+                    .thinkingLevel(GeminiThinkingLevel.HIGH);
                 result.thinkingConfig(think.build());
-            } else {
-                result.thinkingConfig(GeminiThinkingConfig.builder()
-                        .thinkingBudget(0)
-                        .build());
             }
             if (c.getMaxTokens() > 0) result.maxOutputTokens(c.getMaxTokens());
             return result
@@ -276,7 +271,7 @@ public enum AiProvider {
                     .timeout(c.getTimeout())
                     .modelName(c.getModel())
                     .apiKey(c.getApiKey())
-                    .returnThinking(c.shouldReturnThinking())
+                    .returnThinking(true)
                     .sendThinking(c.shouldWeSendThinkingBackToLLM())
                     .customHeaders(c.getHeaderParams())
                     .logRequests(c.isDebugMode())

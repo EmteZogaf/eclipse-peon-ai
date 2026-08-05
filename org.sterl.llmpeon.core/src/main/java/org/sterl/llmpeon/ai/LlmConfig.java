@@ -109,11 +109,6 @@ public class LlmConfig {
         return thinkSupported;
     }
 
-    /** Return + show the model's own thinking when supported or transport resend is on. */
-    public boolean shouldReturnThinking() {
-        return thinkSupported || sendThinkingEnabled;
-    }
-
     /** Resend prior thinking to the model. */
     public boolean shouldWeSendThinkingBackToLLM() {
         return sendThinkingEnabled;
