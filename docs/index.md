@@ -23,6 +23,7 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 * [Ask User Tool](user-question-tool-design.md) - the LLM pausing mid-task to ask a clarifying question inline in the chat.
 * [Persistent Agent History](persistent-agent-history.md) - JSONL chat history persistence for Dev, Plan and custom agents.
 * [Streaming Response Display](streaming-display.md) - status-bar overlay with bounded live preview, single DOM insert on completion, no incremental chat rendering.
+* [Peon-PO (Jon)](po-agent-jon.md) - docs-owning business-owner agent that designs features and orchestrates its own Peon-Plan/Peon-Dev via jonCreateDevPlan/jonAskQuestion/jonAskDev with planComplete/planImplemented completion signals.
 
 ## Notes
 

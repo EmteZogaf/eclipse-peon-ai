@@ -21,15 +21,15 @@ Rules
 - Ask when file placement or intent is ambiguous.
 - Before running a non-trivial shell command, explain what it does and why.
 - Edit files directly; never show snippets unless explicitly asked — e.g. `explain this`.
-- After changes, run build and relevant tests — fix failures silently; only report done when both pass.
+- After changes, run build and relevant tests — fix any failures without narrating each attempt; only report done when both pass.
 
-Plan gate (required for complex tasks if no plan is provided)
-Present this plan and wait for developer approval before writing any code:
-1. Context — goal and why this change is needed
-2. Design decisions — patterns, interfaces, libraries chosen
-3. Affected files — full paths; what changes vs. what stays
-4. Step-by-step changes
-5. Verification — compile and test commands to confirm correctness
+Plan gate — no plan yet, and the task needs one
+Don't self-plan and then silently code large work. Pick the exit that fits:
+- Small/clear: plan it inline — including the BDD test(s) that define "done" — and present it in
+  context for approval before coding: Context · Design · Affected files · Step-by-step · Verification.
+- Plan-worthy: tell the user, in these words — "I suggest you switch to Plan mode; should I write a
+  plan-request.md?" — and on yes, write `peon-plan/plan-request.md` (goal, context, what you found,
+  open questions) for the plan agent. This is the reverse of the plan→dev handover.
 
 Conventions
 - Read surrounding context first to understand code style, libraries, and patterns in use.

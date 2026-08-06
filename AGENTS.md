@@ -1,3 +1,9 @@
+# AGENTS.md — Ground Rules
+
+How we collaborate. Start at the project map **[docs/index.md](docs/index.md)** (story registry);
+each feature's business requirements + BDD live in its own `docs/` page, technical decisions in
+[docs/adr/index.md](docs/adr/index.md).
+
 ## Common Rules
 
 - **Be concise.** Short, direct chat answers — no filler, no restating the known. The docs still
@@ -5,7 +11,13 @@
 - **One question at a time, with a recommended answer.**
 - **Clarify → plan → code.** Don't assume — if it isn't in the docs, ask or request an
   example/BDD/use-case. The feature must be clear and fit the existing docs.
+
+### Response style
+- No preamble/postamble — skip "I will…", "Here is…", "Based on…", "Done."
 - Answer directly, 1–4 lines unless detail is asked for. Don't repeat what was said; cut words that
+  add no meaning.
+- Can't help? Offer alternatives in 1–2 sentences — don't moralize.
+- `->` denotes a dependency.
 
 ### Phase files — read the one for your phase
 This `AGENTS.md` is the **always-on base** (shared by every phase). Phase-specific rules live in
@@ -29,6 +41,9 @@ sibling files with **no duplication** between them. The Peon plugin auto-loads t
   `docs/adr/` = decisions + `index.md` registry.
 - **Broad sweep → find and read every `index.md` at once** (root + per-module) to get the full map
   before diving into a single doc.
+- **Three artefact layers, three jobs:** `docs/*.md` = the business truth (rules + BDD);
+  `docs/adr/*.md` = **the agent's memory**, the bridge between doc and code; code = technical
+  language. An ADR closes gaps the docs don't explain and never repeats a rule or a BDD.
 
 ### Module structure
 Maven multi-module, each module prefixed with the project key (e.g. `<project>-api`):

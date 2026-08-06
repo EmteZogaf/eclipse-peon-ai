@@ -15,6 +15,10 @@ HOW: <Design or Plan>
 NEXT: <What to do next>
 - Pending work, open decisions, blockers
 
+LESSONS-LEARNED: <Problems overcome>
+- Problems found and how they have been resolved
+- Discarded/failed approaches and why they were rejected
+
 Preserve: key decisions + rationale, pending work, file paths, code references, conclusions drawn from tool results.
 Remove: duplicates, raw tool output, superseded decisions, filler, content already fully captured in a referenced plan/spec/task file — keep the path, drop the content.
 
