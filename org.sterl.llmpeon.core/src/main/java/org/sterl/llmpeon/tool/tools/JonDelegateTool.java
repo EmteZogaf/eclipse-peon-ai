@@ -56,24 +56,24 @@ public class JonDelegateTool extends AbstractTool {
         this.memoryProvider = memoryProvider;
     }
 
-    @Tool(name = "talkPlan", value = "Ask your Peon-Plan slave (Da Thinka) a direct question or discuss an approach — no plan is written. Use planWithPlanAgent when you want the plan itself. Returns the slave's reply.")
+    @Tool(name = "talkPlan", value = "Ask your Peon-Plan team member (Da Thinka) a direct question or discuss an approach — no plan is written. Use planWithPlanAgent when you want the plan itself. Returns the team member's reply.")
     public String talkPlan(@P(name = "prompt") String prompt) {
         return dispatch(plan, prompt, baseOrders());
     }
 
-    @Tool(name = "planWithPlanAgent", value = "Have your Peon-Plan slave (Da Thinka) write/refine the plan into " + PeonPaths.PLAN_FILE + " with the plan tools, sliced into small green increments; it plans continuously and asks you if something is unclear. Returns the slave's reply.")
+    @Tool(name = "planWithPlanAgent", value = "Have your Peon-Plan team member (Da Thinka) write/refine the plan into " + PeonPaths.PLAN_FILE + " with the plan tools, sliced into small green increments; it plans continuously and asks you if something is unclear. Returns the team member's reply.")
     public String planWithPlanAgent(@P(name = "prompt") String prompt) {
         var orders = baseOrders();
         orders.add(PLAN_WRITE_LOOP); // one-shot standing order (deduped by the slave)
         return dispatch(plan, prompt, orders);
     }
 
-    @Tool(name = "askDev", value = "Ask your Peon-Dev slave (Da Mek) a direct question about the code or its progress — no build is triggered. Use buildWithAgent to make it implement the plan. Returns the slave's reply.")
+    @Tool(name = "askDev", value = "Ask your Peon-Dev team member (Da Mek) a direct question about the code or its progress — no build is triggered. Use buildWithAgent to make it implement the plan. Returns the team member's reply.")
     public String askDev(@P(name = "prompt") String prompt) {
         return dispatch(dev, prompt, baseOrders());
     }
 
-    @Tool(name = "buildWithAgent", value = "Have your Peon-Dev slave (Da Mek) implement the released plan, increment by increment. Pass planPath (" + PeonPaths.PLAN_FILE + ") — it stays sticky as a standing order so it survives the slave's compaction. Returns the slave's reply.")
+    @Tool(name = "buildWithAgent", value = "Have your Peon-Dev team member (Da Mek) implement the released plan, increment by increment. Pass planPath (" + PeonPaths.PLAN_FILE + ") — it stays sticky as a standing order so it survives the team member's compaction. Returns the team member's reply.")
     public String buildWithAgent(@P(name = "prompt") String prompt,
             @P(name = "planPath", required = false) String planPath) {
         if (StringUtil.hasValue(planPath)) devPlanPath = planPath.trim(); // sticky across calls
@@ -116,7 +116,7 @@ public class JonDelegateTool extends AbstractTool {
             long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000;
             onTool(target.uiName() + " done. (" + StringUtil.humanElapsed(elapsedMillis) + ")");
             String answer = response != null ? response.aiMessage().text() : null;
-            return StringUtil.hasValue(answer) ? answer : slave.getName() + " slave returned no result";
+            return StringUtil.hasValue(answer) ? answer : slave.getName() + " team member returned no result";
         } catch (IllegalStateException e) {
             onProblem(target.uiName() + " " + e.getMessage());
             return "Failed: " + target.uiName() + e.getMessage();

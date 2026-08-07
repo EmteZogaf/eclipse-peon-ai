@@ -25,11 +25,13 @@ export default defineConfig({
           text: 'Introduction',
           items: [
             { text: 'Overview', link: '/' },
+            { text: 'Agents', link: '/setup/agents' },
+            { text: 'Jon & Team', link: '/setup/peon-po' },
+            { text: 'Agent Handoff', link: '/setup/agent-handoff' },
             { text: 'Agents & Skills', link: '/setup/agents-and-skills' },
             { text: 'Custom Agents', link: '/setup/custom-agents' },
             { text: 'Scaffold Agent', link: '/setup/scaffold-agent' },
             { text: 'Commands', link: '/setup/commands' },
-            { text: 'Agent Mode', link: '/setup/agent-mode' },
             { text: 'Memory', link: '/peon-memory' }
           ]
         },

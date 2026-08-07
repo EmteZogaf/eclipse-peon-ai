@@ -129,7 +129,7 @@ public class EclipseWorkspaceWriteFileTool extends AbstractEclipseTool {
         onTool("Created file " + JdtUtil.pathOf(file));
     }
 
-    @Tool("Insert text into a file at a specific position. Omit afterLine to append at end. 0 inserts before the first line (prepend). 1..n inserts after that line.")
+    @Tool("precise, line-targeted updates/insert into a file at a specific position. Omit afterLine to append at end. 0 inserts before the first line (prepend). 1..n inserts after that line.")
     public void eclipseInsertLines(
             @P(description = "workspace-relative path", name = "filePath") String filePath,
             @P(description = "1-based line to insert after; omit to append, 0 to prepend",

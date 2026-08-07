@@ -2,8 +2,7 @@
 
 > **Status: GEBAUT & grün (NICHT committed).** Umgesetzt als eigene Klasse
 > `org.sterl.llmpeon.streaming.ApiRetry` + `ApiRetryTest` (7) + struktureller Test in `ToolServiceTest`;
-> voller Reactor grün. Löst den alten Skizzen-Entwurf [retry-mvp.md](retry-mvp.md) ab (fixes N=3 → jetzt
-> aufladbares Retry-Budget). `retry-mvp.md` kann gelöscht werden.
+> voller Reactor grün. Löst den alten Skizzen-Entwurf ab (fixes N=3 → jetzt aufladbares Retry-Budget).
 >
 > **Eine bewusste Abweichung vom Plan:** `ApiRetry` **hält den `monitor` nicht**, sondern bekommt ihn
 > pro Aufruf: `ChatResponse call(AiMonitor monitor, Supplier<ChatResponse> aiCall)`. Grund: der
