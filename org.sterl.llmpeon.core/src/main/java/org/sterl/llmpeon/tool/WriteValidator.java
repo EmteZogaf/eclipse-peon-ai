@@ -17,5 +17,5 @@ public interface WriteValidator {
     WriteValidator ALLOW_ALL = path -> { /* everything is allowed */ };
 
     /** Jon's scope: a docs folder at any depth, plus any Markdown file. */
-    WriteValidator DOCS = new AllowlistWriteValidator(DEFAULT_ALLOW);
+    WriteValidator DOCS = new AllowlistWriteValidator("*/docs/*", "*.md");
 }
