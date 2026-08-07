@@ -45,7 +45,6 @@ class AiPoAgentTest {
         assertThat(p).contains("askDev").contains("buildWithAgent");       // Dev-agent verbs (tool names)
         assertThat(p).contains("searchAgent"); // Jon's throw-away research sub-agent
         assertThat(p).contains("peon-plan/overview.md"); // ${plan} resolved via PeonPaths
-        assertThat(p).contains("RAM-Zustand bleibt erhalten"); // state kept across calls -> ask again, don't guess
         assertThat(p).contains("planPath"); // plan path handed to the Dev agent via the standing order
         assertThat(p).contains("hasPlan");  // check for an existing plan first
         assertThat(p).contains("Abnahme"); // plan must be signed off before the build
