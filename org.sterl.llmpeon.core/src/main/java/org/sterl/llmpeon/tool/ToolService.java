@@ -135,6 +135,10 @@ public class ToolService {
             req.getMonitor().onChatMessage(++iterations, builder);
             response = req.call(builder.build());
 
+            if (response == null) {
+                throw new IllegalStateException("AI call returned null — streaming failed without a response");
+            }
+
             ToSimpleMessage.INSTANCE.convert(response.aiMessage()).forEach(req.monitor::onChatResponse);
 
             if (req.getMonitor().isCanceled()) break; // TODO re-think this

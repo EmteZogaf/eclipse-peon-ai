@@ -111,10 +111,15 @@ public class JonDelegateTool extends AbstractTool {
         long startNanos = System.nanoTime();
         // The slave streams through Jon's monitor (this.monitor) — that is what refreshes its 🟢 in the
         // header status widget while it works (ADR-0025). Keep the monitor passed through.
-        ChatResponse response = slave.call(prompt, this.monitor);
-        long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000;
-        onTool(target.uiName() + " done. (" + StringUtil.humanElapsed(elapsedMillis) + ")");
-        String answer = response != null ? response.aiMessage().text() : null;
-        return StringUtil.hasValue(answer) ? answer : slave.getName() + " slave returned no result";
+        try {
+            ChatResponse response = slave.call(prompt, this.monitor);
+            long elapsedMillis = (System.nanoTime() - startNanos) / 1_000_000;
+            onTool(target.uiName() + " done. (" + StringUtil.humanElapsed(elapsedMillis) + ")");
+            String answer = response != null ? response.aiMessage().text() : null;
+            return StringUtil.hasValue(answer) ? answer : slave.getName() + " slave returned no result";
+        } catch (IllegalStateException e) {
+            onProblem(target.uiName() + " " + e.getMessage());
+            return "Failed: " + target.uiName() + e.getMessage();
+        }
     }
 }

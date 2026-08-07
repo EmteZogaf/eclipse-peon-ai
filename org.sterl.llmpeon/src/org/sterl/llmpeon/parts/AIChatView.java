@@ -346,7 +346,8 @@ public class AIChatView implements EclipseAiMonitor {
 
     @Override
     public void onStreamingChunk(OnPartialAiResponse r) {
-        chatHistory.onStreamingChunk(r);
+        if (parent.isDisposed()) return;
+        EclipseUtil.runInUiThread(parent, () -> chatHistory.onStreamingChunk(r));
     }
 
     @Override

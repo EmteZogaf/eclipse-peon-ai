@@ -1,6 +1,7 @@
 package org.sterl.llmpeon.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -188,5 +189,27 @@ class ToolServiceTest {
             return null;
         }).when(cm).chat(any(ChatRequest.class), any(StreamingChatResponseHandler.class));
         return cm;
+    }
+
+    @Test
+    void executeLoop_throws_on_null_response() {
+        // GIVEN — streaming fails without a response (onError instead of onCompleteResponse)
+        var cm = mock(StreamingChatModel.class);
+        doAnswer(inv -> {
+            inv.getArgument(1, StreamingChatResponseHandler.class)
+                    .onError(new RuntimeException("simulated streaming failure"));
+            return null;
+        }).when(cm).chat(any(ChatRequest.class), any(StreamingChatResponseHandler.class));
+        var memory = new ThreadSafeMemory();
+        memory.add(UserMessage.from("Hello"));
+        var req = ToolLoopRequest.builder()
+                .memory(memory)
+                .chatModel(new ConfiguredChatModel(LlmConfig.newOpenAi("foo"), cm))
+                .build();
+
+        // WHEN + THEN
+        assertThatThrownBy(() -> subject.executeLoop(req))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("simulated streaming failure");
     }
 }

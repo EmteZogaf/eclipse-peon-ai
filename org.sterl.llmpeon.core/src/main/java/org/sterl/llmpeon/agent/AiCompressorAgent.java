@@ -51,6 +51,9 @@ public class AiCompressorAgent {
 
         monitor.onChatMessage(1, request);
         var result = chatModel.callBlocking(request.build(), monitor);
+        if (result == null) {
+            throw new IllegalStateException("AI call returned null — streaming failed without a response");
+        }
         ToSimpleMessage.INSTANCE.convert(result.aiMessage()).forEach(monitor::onChatResponse);
         
         return result;
