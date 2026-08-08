@@ -7,5 +7,6 @@ public record SimpleMessage(Type role, String message) {
         PROBLEM,
         TOOL,
         THINK,
+        QUESTION,
     }
 }

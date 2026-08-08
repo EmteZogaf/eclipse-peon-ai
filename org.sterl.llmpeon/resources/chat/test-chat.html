@@ -75,6 +75,8 @@
         <button class="test-btn" onclick="testAiMessage()">AI Message (with code)</button>
         <button class="test-btn" onclick="testToolMessage()">Tool Message</button>
         <button class="test-btn" onclick="testProblemMessage()">Problem Message</button>
+        <button class="test-btn" onclick="testQuestionMessage()">Question Message</button>
+        <button class="test-btn" onclick="testQuestionFormatted()">Question (formatted)</button>
         <button class="test-btn" onclick="testMultipleMessages()">Multiple Alternating</button>
 
         <h3>Streaming</h3>
@@ -128,6 +130,14 @@
 
         function testProblemMessage() {
             send({role: 'PROBLEM', message: 'Error: Could not find method processData()'});
+        }
+
+        function testQuestionMessage() {
+            send({role: 'QUESTION', message: 'Which approach should I use, option A or B?'});
+        }
+
+        function testQuestionFormatted() {
+            send({role: 'QUESTION', message: 'I found two possible interpretations:\n\n1. **Option A** — Process synchronously\n2. **Option B** — Use async with callback\n\nWhich one do you prefer?'});
         }
 
         function testMultipleMessages() {

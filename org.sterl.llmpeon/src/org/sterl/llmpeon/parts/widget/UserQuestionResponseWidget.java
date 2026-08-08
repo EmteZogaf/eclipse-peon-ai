@@ -25,17 +25,16 @@ import org.sterl.llmpeon.parts.tools.AskUserTool;
  * <p>Selecting a radio pre-fills the text field so the user can still refine the answer before
  * submitting. Submit always sends {@link TextInputWidget#getText()}.
  */
-public class UserQuestionWidget extends Composite {
+public class UserQuestionResponseWidget extends Composite {
 
     public static final String CANCEL = AskUserTool.CANCEL;
-    private final Label questionLabel;
     private Composite radiosContainer;
     private final TextInputWidget textInput;
     private final Runnable onSubmitDone;
 
     private final AtomicReference<Consumer<String>> pendingAnswer = new AtomicReference<>();
 
-    public UserQuestionWidget(Composite parent, int style, Runnable onSubmitDone) {
+    public UserQuestionResponseWidget(Composite parent, int style, Runnable onSubmitDone) {
         super(parent, style);
         this.onSubmitDone = onSubmitDone;
 
@@ -46,26 +45,24 @@ public class UserQuestionWidget extends Composite {
         setLayout(layout);
         
         final Color bgWhite = getDisplay().getSystemColor(SWT.COLOR_WHITE);
-        questionLabel = new Label(this, SWT.WRAP);
-        questionLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
         // radiosContainer placeholder — rebuilt on each showQuestion() call
         radiosContainer = new Composite(this, SWT.NONE);
         radiosContainer.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
         radiosContainer.setLayout(new RowLayout(SWT.VERTICAL));
 
-        // Bottom row: text input + submit button
+        // Bottom row: text input (left) + button column (right)
         Composite inputRow = new Composite(this, SWT.NONE);
-        GridLayout inputRowLayout = new GridLayout(3, false);
-        inputRowLayout.marginWidth = 0;
-        inputRowLayout.marginHeight = 0;
-        inputRowLayout.horizontalSpacing = 4;
+        GridLayout inputRowLayout = new GridLayout(2, false);
+        inputRowLayout.marginWidth = 2;
+        inputRowLayout.marginHeight = 2;
+        inputRowLayout.horizontalSpacing = 0;
         inputRow.setLayout(inputRowLayout);
-        inputRow.setLayoutData(new GridData(SWT.FILL, SWT.BOTTOM, true, false));
+        inputRow.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
         textInput = new TextInputWidget(inputRow, SWT.NONE, 2, 7, this::requestReflow);
-        textInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-        textInput.setBackground(bgWhite);
+        textInput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+        textInput.setTextBackground(bgWhite);
 
         // Ctrl/Cmd+Enter submits
         textInput.addKeyListener(KeyListener.keyPressedAdapter(e -> {
@@ -78,14 +75,35 @@ public class UserQuestionWidget extends Composite {
             }
         }));
 
-        Button cancelButton = new Button(inputRow, SWT.PUSH);
+        // Right button column — cancel (top), filler (expand), answer (bottom)
+        Composite rightColumn = new Composite(inputRow, SWT.NONE);
+        GridLayout rcLayout = new GridLayout(1, false);
+        rcLayout.marginWidth = 0;
+        rcLayout.marginHeight = 4;
+        rcLayout.verticalSpacing = 4;
+        rightColumn.setLayout(rcLayout);
+        rightColumn.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, true));
+        rightColumn.setBackground(bgWhite);
+        rightColumn.setBackgroundMode(SWT.INHERIT_DEFAULT);
+        rightColumn.addPaintListener(e -> {
+            e.gc.setBackground(bgWhite);
+            e.gc.fillRectangle(rightColumn.getClientArea());
+        });
+
+        Button cancelButton = new Button(rightColumn, SWT.PUSH);
         cancelButton.setText("Cancel");
-        cancelButton.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+        cancelButton.setLayoutData(new GridData(SWT.CENTER, SWT.TOP, false, false));
         cancelButton.addListener(SWT.Selection, e -> cancel());
 
-        Button submitButton = new Button(inputRow, SWT.PUSH);
+        Label filler = new Label(rightColumn, SWT.NONE);
+        GridData fillerData = new GridData(SWT.FILL, SWT.FILL, false, true);
+        fillerData.heightHint = 0;
+        filler.setLayoutData(fillerData);
+        filler.setBackground(bgWhite);
+
+        Button submitButton = new Button(rightColumn, SWT.PUSH);
         submitButton.setText("Answer");
-        submitButton.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+        submitButton.setLayoutData(new GridData(SWT.CENTER, SWT.BOTTOM, false, false));
         submitButton.addListener(SWT.Selection, e -> doSubmit());
     }
 
@@ -114,9 +132,8 @@ public class UserQuestionWidget extends Composite {
     /**
      * Populates and reveals the widget. Must be called on the UI thread.
      */
-    public void showQuestion(String question, List<String> answers, Consumer<String> onAnswer) {
+    public void showQuestion(List<String> answers, Consumer<String> onAnswer) {
         pendingAnswer.set(onAnswer);
-        questionLabel.setText(question != null ? question : "");
 
         // Rebuild radio buttons for this question
         for (Control c : radiosContainer.getChildren()) c.dispose();
@@ -147,7 +164,6 @@ public class UserQuestionWidget extends Composite {
      */
     public void hideQuestion() {
         pendingAnswer.set(null);
-        questionLabel.setText("");
         textInput.clearText();
         for (Control c : radiosContainer.getChildren()) c.dispose();
         radiosContainer.layout(true, true);

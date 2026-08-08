@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -135,6 +136,13 @@ class ToolServiceTest {
         @Override public void withToolRequest(ToolLoopRequest request) {}
     }
 
+    /** A tool that cancels — used to prove cancellation aborts the loop immediately. */
+    static class CancelTool implements SmartTool {
+        @Tool("cancels immediately")
+        public String cancel() { throw new CancellationException("user canceled"); }
+        @Override public void withToolRequest(ToolLoopRequest request) {}
+    }
+
     /**
      * A throwing tool goes through the tool-loop feedback path (onProblem + error result fed back to
      * the model), NOT through {@link org.sterl.llmpeon.streaming.ApiRetry} — the retry wraps only the
@@ -177,6 +185,39 @@ class ToolServiceTest {
         // AND — NOT retried: no ApiRetry message, and exactly two model rounds (tool-call + answer)
         assertThat(problems).noneMatch(p -> p.contains("API error — attempt"));
         assertThat(round.get()).isEqualTo(2);
+    }
+
+    /**
+     * A canceling tool aborts the entire loop — the exception propagates through SmartToolExecutor
+     * (which detects it via ExceptionUtil.isCanceled) and ToolService.runAllTools (same check),
+     * so the model is called only once and no error result is fed back.
+     */
+    @Test
+    @Timeout(10)
+    void tool_cancellation_aborts_loop() {
+        // GIVEN — model asks for the cancel tool; a second round would never happen
+        var cancel = new CancelTool();
+        subject.replaceTool(cancel);
+        var round = new AtomicInteger();
+        var cm = mockWithHandler(req -> {
+            round.incrementAndGet();
+            return ChatResponse.builder().aiMessage(AiMessage.builder()
+                    .toolExecutionRequests(List.of(ToolExecutionRequest.builder()
+                            .id("1").name("cancel").arguments("{}").build()))
+                    .build()).build();
+        });
+        var memory = new ThreadSafeMemory();
+        memory.add(UserMessage.from("go"));
+
+        // WHEN + THEN — ToolExecutionException wraps the CancellationException and propagates
+        assertThatThrownBy(() -> subject.executeLoop(ToolLoopRequest.builder()
+                .memory(memory)
+                .chatModel(new ConfiguredChatModel(LlmConfig.newOpenAi("foo"), cm))
+                .build()))
+                .isInstanceOf(dev.langchain4j.exception.ToolExecutionException.class)
+                .hasCauseInstanceOf(CancellationException.class);
+        // AND — only one model round; the loop did NOT continue after the cancel
+        assertThat(round.get()).isEqualTo(1);
     }
 
     public StreamingChatModel mockWithHandler(Function<ChatRequest, ChatResponse> fn) {

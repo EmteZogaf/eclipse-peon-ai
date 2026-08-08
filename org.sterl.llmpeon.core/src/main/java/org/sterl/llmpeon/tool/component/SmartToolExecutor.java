@@ -2,6 +2,7 @@ package org.sterl.llmpeon.tool.component;
 
 import java.lang.reflect.Method;
 
+import org.sterl.llmpeon.exception.ExceptionUtil;
 import org.sterl.llmpeon.tool.SmartTool;
 import org.sterl.llmpeon.tool.ToolLoopRequest;
 
@@ -40,13 +41,18 @@ public class SmartToolExecutor {
         } catch (IllegalArgumentException e) {
             var msg = e.getMessage();
             reportProblem(request, req, msg);
-            return e.getMessage();
+            return msg;
         } catch (ToolExecutionException e) {
+            if (ExceptionUtil.isCanceled(e)) throw e; // cancellation bubbles up — not an error
             if (e.getCause() instanceof IllegalArgumentException ex) {
                 reportProblem(request, req, ex.getMessage());
                 return ex.getMessage();
             }
             throw e;
+        } catch (Exception e) {
+            if (ExceptionUtil.isCanceled(e)) throw e; // cancellation wrapped in another exception
+            if (e instanceof RuntimeException ex) throw ex;
+            throw new RuntimeException(e);
         } finally {
             tool.withToolRequest(null);
         }

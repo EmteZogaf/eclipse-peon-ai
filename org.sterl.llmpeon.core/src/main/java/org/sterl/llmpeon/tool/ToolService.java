@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jspecify.annotations.NonNull;
+import org.sterl.llmpeon.exception.ExceptionUtil;
 import org.sterl.llmpeon.mcp.McpServerConfig;
 import org.sterl.llmpeon.mcp.McpService;
 import org.sterl.llmpeon.shared.StringUtil;
@@ -197,6 +198,7 @@ public class ToolService {
                 var trResult = execute(tr, req);
                 toolResults.add(trResult);
             } catch (Exception e) {
+                if (ExceptionUtil.isCanceled(e)) throw e;
                 log.error("Tool {} with args {} failed", tr.name(), tr.arguments(), e);
                 req.getMonitor().onProblem(tr.name() + " failed: " + e.getMessage() + " details logged.");
                 toolResults.add(ToolExecutionResultMessage.from(tr.id(), tr.name(),

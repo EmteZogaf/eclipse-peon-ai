@@ -33,6 +33,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkingSet;
 import org.sterl.llmpeon.StandingOrdersBuilder;
 import org.sterl.llmpeon.agent.AiAgent;
+import org.sterl.llmpeon.exception.ExceptionUtil;
 import org.sterl.llmpeon.agent.AiPlanAgent;
 import org.sterl.llmpeon.ai.LlmConfig;
 import org.sterl.llmpeon.command.SlashCommandResolver;
@@ -54,7 +55,7 @@ import org.sterl.llmpeon.parts.widget.HeaderBarWidget;
 import org.sterl.llmpeon.parts.widget.StatusLineWidget;
 import org.sterl.llmpeon.parts.widget.StatusLineWidget.SkillMenuSelection;
 import org.sterl.llmpeon.parts.widget.UserInputWidget;
-import org.sterl.llmpeon.parts.widget.UserQuestionWidget;
+import org.sterl.llmpeon.parts.widget.UserQuestionResponseWidget;
 import org.sterl.llmpeon.prompt.model.SimplePromptFile;
 import org.sterl.llmpeon.shared.OnPartialAiResponse;
 import org.sterl.llmpeon.shared.StringUtil;
@@ -65,7 +66,6 @@ import org.sterl.llmpeon.voice.VoiceConfig;
 import org.sterl.llmpeon.voice.VoiceInputService;
 
 import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.exception.RateLimitException;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import jakarta.annotation.PostConstruct;
@@ -104,7 +104,7 @@ public class AIChatView implements EclipseAiMonitor {
     private ChatMarkdownWidget chatHistory;
     private Composite inputBlock;
     private UserInputWidget chatInput;
-    private UserQuestionWidget questionWidget;
+    private UserQuestionResponseWidget questionWidget;
 
     private final UserContext userContext = new UserContext();
 
@@ -155,7 +155,7 @@ public class AIChatView implements EclipseAiMonitor {
             this::onMicClick);
         chatInput.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-        questionWidget = new UserQuestionWidget(inputBlock, SWT.NONE, this::hideQuestion);
+        questionWidget = new UserQuestionResponseWidget(inputBlock, SWT.NONE, this::hideQuestion);
         GridData qgd = new GridData(SWT.FILL, SWT.CENTER, true, false);
         qgd.exclude = true;
         questionWidget.setLayoutData(qgd);
@@ -467,7 +467,7 @@ public class AIChatView implements EclipseAiMonitor {
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
-                    if (UserQuestionWidget.CANCEL.equals(answer.get())) {
+                    if (UserQuestionResponseWidget.CANCEL.equals(answer.get())) {
                         throw new CancellationException("Canceled tool execution " + workingDirectory + " " + command);
                     }
                     return answer.get();
@@ -723,11 +723,8 @@ public class AIChatView implements EclipseAiMonitor {
     private Exception handleChatException(Exception e) {
         if (e == null) return null;
         if (isCanceled()) return null;
-        if (e instanceof CancellationException) return null;
-        var cause = e.getCause();
-        if (cause instanceof CancellationException) return null;
-        
-        if (e instanceof RateLimitException || cause instanceof RateLimitException) {
+        if (ExceptionUtil.isCanceled(e)) return null;
+        if (ExceptionUtil.isRateLimit(e)) {
             onChatResponse(new SimpleMessage(Type.PROBLEM, "API rate limit! " + e.getMessage()));
             return null;
         }
@@ -763,15 +760,16 @@ public class AIChatView implements EclipseAiMonitor {
         }
     }
 
-    private void showQuestion(String question, java.util.List<String> answers,
+    private void showQuestion(String question, List<String> answers,
             java.util.function.Consumer<String> onAnswer) {
-        chatHistory.updateLiveResponseInUIThread("waiting for User answer...", 0, null);
         EclipseUtil.runInUiThread(parent, () -> {
+            chatHistory.hideLiveStatus();
             ((GridData) chatInput.getLayoutData()).exclude = true;
             chatInput.setVisible(false);
             ((GridData) questionWidget.getLayoutData()).exclude = false;
             questionWidget.setVisible(true);
-            questionWidget.showQuestion(question, answers, a -> {
+            chatHistory.appendMessage(new SimpleMessage(Type.QUESTION, question));
+            questionWidget.showQuestion(answers, a -> {
                 chatHistory.appendMessage(new SimpleMessage(Type.USER, a));
                 onAnswer.accept(a);
             });

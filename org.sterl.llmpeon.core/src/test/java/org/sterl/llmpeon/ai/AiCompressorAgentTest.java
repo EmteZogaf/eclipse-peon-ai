@@ -2,9 +2,6 @@ package org.sterl.llmpeon.ai;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -74,10 +71,16 @@ class AiCompressorAgentTest {
     @Test
     void call_throws_on_null_response() {
         // GIVEN — ConfiguredChatModel returns null (simulates streaming failure)
-        var configuredModel = mock(ConfiguredChatModel.class);
+        // Mockito can't mock concrete classes on Java 25 (Byte Buddy limitation),
+        // so we use an anonymous subclass instead.
         var config = LlmConfig.newOpenAi("test-key");
-        when(configuredModel.getConfig()).thenReturn(config);
-        when(configuredModel.callBlocking(any(ChatRequest.class), any(AiMonitor.class))).thenReturn(null);
+        var configuredModel = new ConfiguredChatModel(config) {
+            @Override
+            public dev.langchain4j.model.chat.response.ChatResponse callBlocking(
+                    ChatRequest req, AiMonitor monitor) {
+                return null;
+            }
+        };
         var subject = new AiCompressorAgent(configuredModel);
         List<dev.langchain4j.data.message.ChatMessage> messages = List.of(UserMessage.from("test message"));
 
