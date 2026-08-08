@@ -28,11 +28,20 @@ public class AskUserTool extends AbstractEclipseTool {
         this.presenter = presenter;
     }
 
-    @Tool("Ask the user a clarifying question – guarantees a matching answer despite async, FIFO, order-unsafe chat inputs.")
+    @Tool("""
+          Use this when you need the user's response to be matched to this specific question. 
+          Other user messages may arrive in the meantime; this tool returns the matching response, not an unrelated queued message.
+          """)
     public String askUser(
-            @P(name = "question") 
+            @P(name = "question", description="""
+                    The question shown to the user. Markdown is supported. Include enough
+                    context for the user to understand what is being asked.
+                    """) 
             String question,
-            @P(name = "predefinedAnswers", description = "optional list of answers shown as radio buttons e.g. recommended answer first", required = false) 
+            @P(name = "predefinedAnswers", description = """
+                    Optional answer choices displayed as selectable radio buttons.
+                    If omitted, the user can provide a free-form text answer.
+                    """, required = false) 
             List<String> predefinedAnswers) {
 
         var latch = new CountDownLatch(1);
