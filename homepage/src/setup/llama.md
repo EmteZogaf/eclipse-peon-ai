@@ -75,7 +75,7 @@ llama-server.exe `
   --prio 3 `
   -ts 1,1 `
   -sm layer `
-  -c 150000 `
+  -c 160000 `
   -fa on `
   -ctk q8_0 `
   -ctv q8_0 `
@@ -83,6 +83,7 @@ llama-server.exe `
   -b 2048 `
   -ub 1024 `
   -np -1 `
+  --threads-http 2 `
   --cache-reuse 256 `
   --cache-ram 16000 `
   --ctx-checkpoints 32 `
@@ -93,7 +94,7 @@ llama-server.exe `
   --reasoning-preserve `
   --chat-template-kwargs '{\"preserve_thinking\": true}' `
   --jinja `
-  --chat-template-file qwen-fixed.jinja ` 
+  --chat-template-file qwen-fixed.jinja `
   --host 0.0.0.0 `
   --port 1234 `
   --spec-type draft-mtp `
@@ -153,7 +154,7 @@ llama-server.exe `
   --prio 3 `
   -ts 1,1 `
   -sm layer `
-  -c 150000 `
+  -c 160000 `
   -fa on `
   -ctk q8_0 `
   -ctv q8_0 `
