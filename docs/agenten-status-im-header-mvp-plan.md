@@ -39,8 +39,8 @@ routet nur).
 
 - **`NamedAgent(String uiName, AiAgent agent)`** — schlichter Record (Kern).
 - **`AiPoAgent`** hält `List<NamedAgent>` in fester Reihenfolge (**Da Boss** → Jon selbst (`this`),
-  **Da Thinka** → Plan-Sklave, **Da Mek** → Dev-Sklave) und gibt sie über **`getTeam()`** heraus. Die
-  zwei Sklaven werden **einmal** erzeugt und von `AiPoAgent` **und** `JonDelegateTool` **geteilt** — die
+  **Da Thinka** → Peon-Plan, **Da Mek** → Peon-Dev) und gibt sie über **`getTeam()`** heraus. Die
+  zwei Agenten werden **einmal** erzeugt und von `AiPoAgent` **und** `JonDelegateTool` **geteilt** — die
   Slave-**Factory-Supplier fallen weg**. Die Ork-/Boss-Namen leben **an einer Stelle** (die `NamedAgent`-
   Liste ist die Quelle); `JonDelegateTool` zieht seinen Log-`uiName` aus derselben Quelle statt Literale
   zu duplizieren (sonst driftet „Da Mek" im Log gegen die Anzeige).
@@ -52,12 +52,12 @@ routet nur).
   (`isWorking()`/`getMemory().getTotalTokenUsed()`). Kennt weder PO noch `instanceof`.
 - **Refresh:** `AiMonitor.onChatMessage` (jede Iteration) + **einmal am Ende**
   (`lockWhileWorking(false)`/`onCallCompleted`). Kein Observer, kein Set. **Wichtig:** der Ball auf einem
-  Sklaven aktualisiert sich nur, weil der Sklave über **Jons** Monitor streamt
+  Agenten aktualisiert sich nur, weil der Sklave über **Jons** Monitor streamt
   (`slave.call(prompt, this.monitor)` in `JonDelegateTool`) → dessen `onChatMessage` triggert den
   Widget-Pull. Dieses Monitor-Durchreichen ist der Mechanismus — nicht „aufräumen".
 
 ### Die Blatt-Regel (trivial, pure)
-Da Boss ist der Orchestrator, also darf er **nicht** gleichzeitig mit einem Sklaven glühen (sonst „🟢
+Da Boss ist der Orchestrator, also darf er **nicht** gleichzeitig mit einem Agenten glühen (sonst „🟢
 immer auf Jon"). Regel im Pure-Model:
 - **Sklave** (Da Thinka/Da Mek): `working = agent.isWorking()`.
 - **Da Boss** (erste Zeile): `working = agent.isWorking() && kein Sklave arbeitet`.
@@ -83,7 +83,7 @@ ruhig; Da Mek kommt zurück, Jon schließt ab → Da Boss glüht kurz weiter; fe
 
 **Inc 1 — Team im Agenten (nur *hinzufügen*, nichts löschen). ✅ gebaut, grün.**
 `NamedAgent`-Record; `AiPoAgent` bekommt `List<NamedAgent> getTeam()` = [Da Boss(=`this`), Da Thinka,
-Da Mek]. Die zwei Sklaven werden **einmal** erzeugt und in `PeonAiService` an `AiPoAgent` **und**
+Da Mek]. Die zwei Agenten werden **einmal** erzeugt und in `PeonAiService` an `AiPoAgent` **und**
 `JonDelegateTool` durchgereicht (statt lazy per Factory). `JonDelegateTool` nimmt jetzt die konkreten
 Sklaven; die Factory-Supplier werden **nur intern** überflüssig, bleiben aber samt `peek*Slave()`
 **vorerst stehen** (`peek*Slave()` gibt jetzt einfach das geteilte Feld zurück) — damit das noch

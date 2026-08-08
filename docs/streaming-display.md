@@ -101,3 +101,22 @@ The THINK and ANSWER text accumulators are cleared when a new streaming session 
 
 - **GIVEN** a previous streaming session accumulated text **WHEN** a new START chunk arrives **THEN** both `thinkText` and `answerText` accumulators are cleared
 - **Tag:** unit (verify `ChatMarkdownWidget.updateRunningChunk` calls `setLength(0)` on START)
+
+
+### R13 — StreamingBridge captures partial results and throws specific exceptions 🚧
+
+**Rule:** `StreamingBridge` accumulates THINK and ANSWER chunks during streaming. On abort or error, it throws a dedicated exception **only when partial content is available**.
+
+Two dedicated exception types carry the partial payload:
+- **`PartialStreamCanceled`** — thrown on user abort/Stop **if chunks arrived**. Contains the accumulated partial text (thinking + answer) up to the cancel point.
+- **`PartialStreamError`** — thrown on provider error/rate-limit mid-stream **if chunks arrived**. Contains the accumulated partial text plus the root error.
+
+Both expose `getPartialAiMessage()` (thinking + text) so the caller can append it to history or surface it to the UI. If no chunks arrived, the standard `CancellationException` / original error is thrown (no partial wrapper needed).
+
+- **GIVEN** a streaming response is in progress and THINK/ANSWER chunks have arrived **WHEN** the call is canceled **THEN** `StreamingBridge` throws `PartialStreamCanceled` carrying the accumulated partial text
+- **GIVEN** a streaming response is in progress and THINK/ANSWER chunks have arrived **WHEN** a provider error occurs mid-stream **THEN** `StreamingBridge` throws `PartialStreamError` carrying the accumulated partial text and the root error
+- **GIVEN** no chunks arrived yet **WHEN** the call is canceled or errors **THEN** the standard `CancellationException` / original error is thrown (no partial exception)
+- **GIVEN** a partial exception is caught **WHEN** the agent updates memory **THEN** `getPartialAiMessage()` is appended to history so the LLM can resume from the partial result
+- **Tag:** core (verify `StreamingBridge` accumulators; verify dedicated exceptions thrown only when partial content exists)
+
+**Context:** Currently only the UI monitor sees partial chunks. On cancel/error, the already-streamed text is lost. Dedicated exceptions make the partial result first-class: clean abort paths, resume after rate-limit, and future "save partial on error" without monitor-hacks.

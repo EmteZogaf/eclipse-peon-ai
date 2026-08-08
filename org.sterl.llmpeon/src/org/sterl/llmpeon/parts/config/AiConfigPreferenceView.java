@@ -70,8 +70,11 @@ public class AiConfigPreferenceView extends FieldEditorPreferencePage implements
                 "Enable Disk File Tools (outside Eclipse workspace)", getFieldEditorParent()));
 
         addField(new ComboFieldEditor(PeonConstants.PREF_SHELL_CONFIRMATION_ENABLED, "Shell Command Confirmation:",
-                new String[][] { { "Not Required", "false" }, { "Always Required", "always" },
-                        { "Except when Autonomous", "not-autonomous" } },
+                new String[][] { 
+                    { "Not Required", "false" }, 
+                    { "Always Required", "always" },
+                    { "Except in Peon-PO / autonomous mode", "not-autonomous" } 
+                },
                 getFieldEditorParent()));
 
         addField(new StringFieldEditor(PeonConstants.PREF_CONFIG_DIRECTORY, "Config directory:", 

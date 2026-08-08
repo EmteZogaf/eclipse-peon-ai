@@ -5,7 +5,8 @@
 - The LLM can pause mid-task and ask the user a clarifying question with optional predefined answer choices.
 - The user can always override predefined choices with free text.
 - One question per tool call; displayed inline in the chat view (no dialog).
-- Cancelling (Stop button or job interruption) returns `"[cancelled]"` to the LLM so it can react gracefully.
+- Cancelling (Stop button or job interruption) returns `"[canceled]"` to the LLM so it can react gracefully.
+- **Queue-Safety:** The `AskUserTool` blocks the agent thread via `CountDownLatch`, guaranteeing the next user input is treated as the direct answer — preventing queued messages from interrupting the LLM's line of thought or misaligning with the question.
 
 ## Interaction Design
 

@@ -1,21 +1,30 @@
 package org.sterl.llmpeon.tool.tools;
 
 import java.util.Arrays;
+import java.util.function.Predicate;
 
 import org.sterl.llmpeon.memory.ThreadSafeMemory;
 import org.sterl.llmpeon.prompt.PromptLoader;
 import org.sterl.llmpeon.shared.ArgsUtil;
 import org.sterl.llmpeon.shared.StringUtil;
 import org.sterl.llmpeon.tool.ToolService;
+import org.sterl.llmpeon.tool.component.SmartToolExecutor;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
+import lombok.Getter;
+import lombok.Setter;
 
 public class SearchAgentTool extends AbstractTool {
 
-    final SystemMessage system = SystemMessage.systemMessage(PromptLoader.loadWithDefault("search-agent.txt"));
+    private final SystemMessage system = SystemMessage.systemMessage(PromptLoader.load("search-agent.txt"));
+
+    @Getter @Setter
+    private Predicate<SmartToolExecutor> filter = e -> !e.getTool().isEditTool() 
+            && !(e.getTool() instanceof SearchAgentTool)
+            && !(e.getTool() instanceof ShellTool);
 
     private final ToolService toolService;
 
@@ -36,7 +45,7 @@ public class SearchAgentTool extends AbstractTool {
 
             var request = this.request.toBuilder()
                 .staticMessages(Arrays.asList(system))
-                .toolFilter(e -> !e.getTool().isEditTool() && !(e.getTool() instanceof SearchAgentTool))
+                .toolFilter(filter)
                 .memory(messages)
                 .agentConfig(cfg.searchAgentConfig());
 

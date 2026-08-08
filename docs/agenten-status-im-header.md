@@ -2,7 +2,7 @@
 
 > **Status: GEBAUT ✅ (nicht committet).** Roster ist auf den **aktiven Agenten** gescopet: seine
 > Zeile (Name + Kontextgröße) + 🟢 auf dem **Blatt-Worker**. Im **Jon-Modus** reiten seine zwei
-> Sklaven (Plan, Dev) als feste Zeilen mit **ihrer eigenen** Kontextgröße mit. Search erscheint als
+> Agenten (Plan, Dev) als feste Zeilen mit **ihrer eigenen** Kontextgröße mit. Search erscheint als
 > transienter Chip. Ein `·` trennt Token-Readout und Roster optisch.
 
 ## Ziel
@@ -19,7 +19,7 @@ Peon-Dev aktiv, idle:
 Peon-Dev aktiv, arbeitet direkt (kein Sub-Agent):
 │ ↑12k ↓8k  ·  🟢 Peon-Dev (45k)                                     🔨 │
 
-Jon (Peon-PO) aktiv, idle — seine Sklaven immer sichtbar, Plan vor Dev:
+Jon (Peon-PO) aktiv, idle — seine Agenten immer sichtbar, Plan vor Dev:
 │ ↑12k ↓8k  ·  Peon-PO (12k) · Peon-Plan (8k) · Peon-Dev (45k)       🔨 │
 
 Jon delegiert an Da Mek → der Sklave glüht, Jon bleibt ruhig:
@@ -34,11 +34,11 @@ Scaffold, Custom-Agents) sind irrelevant, solange man nicht mit ihnen spricht �
 rauschen (dieselbe Klasse wie Scaffold). Der Roster zeigt darum **den aktiven Agenten** und das, was
 er real spawnt.
 
-**Warum Jons Sklaven eine Ausnahme sind:** Wenn Jon aktiv ist, *ist* sein Team (Plan/Dev) die
+**Warum Jons Agenten eine Ausnahme sind:** Wenn Jon aktiv ist, *ist* sein Team (Plan/Dev) die
 relevante Arbeitsumgebung — man will sie **immer** sehen, nicht nur während er delegiert. Wichtig:
 Das sind **Jons eigene RAM-only-Sklaven** (`JonDelegateTool.peekPlanSlave()/peekDevSlave()`), **nicht**
 die persistenten Peon-Plan/Peon-Dev-Agenten — sie haben **eigene** Kontextgrößen. Beim Wechsel auf
-Jon zeigt der Roster also die Größen *seiner* Sklaven (0k, solange er noch nie delegiert hat).
+Jon zeigt der Roster also die Größen *seiner* Agenten (0k, solange er noch nie delegiert hat).
 
 **Kein WARTET-Rauschen:** Es kann immer nur **einer** arbeiten (siehe unten). Statt „WARTET" an jeden
 idle Worker steht der Roster ruhig da; nur der Blatt-Worker glüht.
@@ -67,7 +67,7 @@ selben Turn auf demselben Thread** — echte Parallelität gibt es nicht.
 * Jons **Sklaven** sind persistente Lazy-Singletons auf dem `JonDelegateTool` (Felder
   `planSlave`/`devSlave`, erzeugt bei erster Delegation, danach am Leben → ihr RAM-Kontext trägt über
   Calls). Der Roster **peekt** sie (`peekPlanSlave/peekDevSlave` — erzeugt sie **nicht**, damit ein
-  Peek keinen Sklaven eager hochfährt) und liest `getTotalTokenUsed()`/`isWorking()` live.
+  Peek keinen Agenten eager hochfährt) und liest `getTotalTokenUsed()`/`isWorking()` live.
 * Der **Search-Agent** ist kein `AiAgent` (kein `isWorking`) — sein Signal ist die
   `onSubAgent("Search", …)`-Klammer im `SearchAgentTool` → transienter Chip.
 
@@ -123,12 +123,12 @@ default void onSubAgent(String displayName, boolean active) { /* no-op */ }
 * **Nur `SearchAgentTool`** benutzt den Chip-Kanal: es klammert `executeLoop(...)` mit
   `onSubAgent("Search", true/false)` (`try/finally`, damit das 🟢 auch bei Exception ausgeht) → Chip.
   `Search` ist **zeilenlos** (kein `AiAgent`), darum ist der Chip die einzig richtige Darstellung.
-* **`JonDelegateTool` sendet KEIN `onSubAgent` mehr.** Jons Sklaven haben feste Roster-Zeilen und
+* **`JonDelegateTool` sendet KEIN `onSubAgent` mehr.** Jons Agenten haben feste Roster-Zeilen und
   glühen über ihr live gepeektes `isWorking()`. Ein Chip mit demselben **Namen** wie eine Roster-Zeile
   (`Peon-Plan`/`Peon-Dev`) kollidierte mit dieser Zeile und rendert den Agenten **doppelt** — genau
   der Bug. Der Chip-Kanal ist ausschließlich für **zeilenlose** transiente Sub-Agenten (Search).
   Der prompte Refresh bei Delegations-Start/-Ende kommt ohnehin über die `onChatMessage`/
-  `onChatResponse`/`onTokenUsage`-Callbacks des Sklaven (die durch Jons Monitor laufen).
+  `onChatResponse`/`onTokenUsage`-Callbacks des Agenten (die durch Jons Monitor laufen).
 
 Die View hält die laufenden Sub-Agenten in `ConcurrentHashMap.newKeySet()`; `onSubAgent` add/remove +
 `refreshRoster()` auf dem UI-Thread.
@@ -146,7 +146,7 @@ Die View hält die laufenden Sub-Agenten in `ConcurrentHashMap.newKeySet()`; `on
 
 * **`PeonAiService`** — `record AgentStatus(name, contextTokens, working)` +
   `record RosterSnapshot(active, slaves)` + `getRoster()` (aktiver Agent; im Jon-Modus zusätzlich die
-  gepeekten Sklaven Plan→Dev). Hält jetzt das `JonDelegateTool` als Feld, um zu peeken.
+  gepeekten Agenten Plan→Dev). Hält jetzt das `JonDelegateTool` als Feld, um zu peeken.
 * **`JonDelegateTool`** — `peekPlanSlave()`/`peekDevSlave()` (non-creating, nullable).
 * **`AgentRosterModel`** (rein) — `build(active, slaves, workingSubAgents)` mit Blatt-Regel + Chip-Merge;
   Chips werden gegen die **aktive** Zeile **und** die Sklaven-Zeilen de-dupt (kein Doppel-Rendern).
@@ -180,8 +180,8 @@ Die View hält die laufenden Sub-Agenten in `ConcurrentHashMap.newKeySet()`; `on
 | „Peon-Dev fett obwohl nix aktiv" | Default-Aktiver ist `devAgent` (AgentService Z.95); Fett am Selektierten | Fett ganz raus; Highlight = 🟢 nur bei `working` |
 | Scaffold/andere Agenten im Roster | `getAgents()` global gelistet | Roster auf den **aktiven** Agenten gescopet |
 | 🟢 immer auf Peon-PO | Jons `isWorking` bei Delegation korrekt true — Orchestrator gehighlightet | Blatt-Regel: aktive Zeile glüht nur ohne laufenden Sub-Worker; `onSubAgent`/`isWorking` glühen den echten Worker |
-| Plan/Dev auch außerhalb Jon sichtbar | globale Liste | nur im Jon-Modus, als **seine** Sklaven |
-| Sklaven zeigten Größe der persistenten Dev/Plan | falsche Instanzen | Jons eigene Sklaven peeken (eigener Kontext) |
+| Plan/Dev auch außerhalb Jon sichtbar | globale Liste | nur im Jon-Modus, als **seine** Agenten |
+| Agenten zeigten Größe der persistenten Dev/Plan | falsche Instanzen | Jons eigene Agenten peeken (eigener Kontext) |
 | „·" fehlte zwischen Tokens und Roster | kein Divider im Header | `·`-Label als 2. Grid-Spalte |
 | Aktiver Plan/Dev **doppelt** angezeigt | `JonDelegateTool.onSubAgent("Peon-Plan"/"Peon-Dev")` erzeugt Chip mit **gleichem Namen** wie die Roster-Zeile; Merge de-dupte Chips nur gegen Sklaven-, nicht gegen die **aktive** Zeile | `JonDelegateTool`-Emission **entfernt** (Sklaven glühen über `isWorking`); Merge de-dupt Chips auch gegen die aktive Zeile |
 | Such-Agent läuft → **Dev doppelt** (statt „Dev · Search") | ein aus einer Jon-Delegation **geleakter** `Peon-Dev`-Chip überlebte den Agenten-Wechsel (`workingSubAgents` nie geleert) und stand neben dem frischen `Search`-Chip | `onAgentChange` **leert** `workingSubAgents`; zusätzlich Emission entfernt + aktive-Zeile-De-dup |
@@ -196,10 +196,10 @@ GIVEN Peon-Dev ist aktiv und arbeitet direkt (kein Sub-Agent)
 THEN glüht "🟢 Peon-Dev (45k)"
 
 GIVEN Jon (Peon-PO) ist aktiv
-THEN zeigt der Roster "Peon-PO (…)" + seine festen Sklaven "Peon-Plan (…)" · "Peon-Dev (…)" (Plan vor Dev)
+THEN zeigt der Roster "Peon-PO (…)" + seine festen Agenten "Peon-Plan (…)" · "Peon-Dev (…)" (Plan vor Dev)
 AND die Sklaven-Größen sind die SEINER RAM-Sklaven (0k, bevor er je delegiert hat)
 
-GIVEN Jon delegiert an seinen Dev-Sklaven
+GIVEN Jon delegiert an seinen Peon-Devn
 WHEN der Sklave arbeitet (isWorking bzw. onSubAgent("Peon-Dev", true))
 THEN glüht die feste "Peon-Dev"-Zeile — kein Doppel-Chip, Jons Zeile bleibt ruhig
 WHEN die Delegation endet

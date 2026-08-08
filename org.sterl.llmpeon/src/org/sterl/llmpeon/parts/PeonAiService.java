@@ -26,6 +26,7 @@ import org.sterl.llmpeon.parts.config.McpConnectionService;
 import org.sterl.llmpeon.parts.shared.EclipseUtil;
 import org.sterl.llmpeon.parts.shared.IoUtils;
 import org.sterl.llmpeon.parts.shared.JdtUtil;
+import org.sterl.llmpeon.parts.tools.AskUserTool;
 import org.sterl.llmpeon.parts.tools.EclipseBuildTool;
 import org.sterl.llmpeon.parts.tools.EclipseCodeNavigationTool;
 import org.sterl.llmpeon.parts.tools.EclipseConsoleLogTool;
@@ -43,10 +44,11 @@ import org.sterl.llmpeon.skill.SkillService;
 import org.sterl.llmpeon.tool.ToolService;
 import org.sterl.llmpeon.tool.component.SmartToolExecutor;
 import org.sterl.llmpeon.tool.tools.DiskFileReadTool;
-import org.sterl.llmpeon.tool.tools.JonDelegateTool;
 import org.sterl.llmpeon.tool.tools.DiskFileWriteTool;
 import org.sterl.llmpeon.tool.tools.DiskGrepTool;
+import org.sterl.llmpeon.tool.tools.JonDelegateTool;
 import org.sterl.llmpeon.tool.tools.SearchAgentTool;
+import org.sterl.llmpeon.tool.tools.ShellTool;
 import org.sterl.llmpeon.tool.tools.SkillTool;
 
 import dev.langchain4j.data.message.AiMessage;
@@ -124,6 +126,11 @@ public class PeonAiService implements MessageProvider {
         commandService          = new CommandService();
         agentsMdService         = new AgentsMdService();
         agentsMdService.setAgentNameSupplier(() -> getActiveAgent().getName());
+        // todo
+        var sa = sharedToolService.getTool(SearchAgentTool.class)
+            .get();
+        sa.setFilter(sa.getFilter().and(e -> !(e.getTool() instanceof AskUserTool)
+                       && !(e.getTool() instanceof WorkspaceMemoryTool)));
 
         sharedToolService.addTool(new SkillTool(skillService));
         workspaceWriteFilesTool = new EclipseWorkspaceWriteFileTool();
@@ -176,17 +183,18 @@ public class PeonAiService implements MessageProvider {
         // Eclipse tool set. Lazy singletons via the factory so Jon-in-core stays testable headless.
         // Slaves may READ the shared memory (injected as a standing order) but never WRITE it — strip the
         // memory-write tool from their effective set; only Jon curates the shared memory.
-        Predicate<SmartToolExecutor> noMemoryWrite = t -> !(t.getTool() instanceof WorkspaceMemoryTool);
+        Predicate<SmartToolExecutor> noPrivilegedTools = t -> !(t.getTool() instanceof WorkspaceMemoryTool)
+                && !(t.getTool() instanceof AskUserTool);
         // Eager shared slaves (ADR-0025): created once here and handed — as the same NamedAgent objects —
         // to both the delegate tool (which drives them) and AiPoAgent (which exposes them via getTeam()).
         AiAgent planSlave = new AiPlanAgent(configuredModel, sharedToolService, SLAVE_COMPACT_FACTOR) {
             @Override protected Predicate<SmartToolExecutor> getToolFilter() {
-                return super.getToolFilter().and(noMemoryWrite);
+                return super.getToolFilter().and(noPrivilegedTools);
             }
         };
         AiAgent devSlave = new AiDevAgent(configuredModel, sharedToolService, SLAVE_COMPACT_FACTOR) {
             @Override protected Predicate<SmartToolExecutor> getToolFilter() {
-                return super.getToolFilter().and(noMemoryWrite);
+                return super.getToolFilter().and(noPrivilegedTools);
             }
         };
         var thinka = new NamedAgent("Da Thinka", planSlave);

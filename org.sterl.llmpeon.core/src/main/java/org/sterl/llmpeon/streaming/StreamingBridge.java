@@ -73,9 +73,10 @@ public class StreamingBridge implements StreamingChatResponseHandler {
             StreamingHandle h = handleRef.get();
             if (h != null) h.cancel();
             errorRef.compareAndSet(null, new CancellationException("Thread interrupted"));
-            latch.countDown();
         } catch (Exception e) {
             error = e;
+        } finally {
+            latch.countDown();
         }
 
         error = errorRef.get() == null ? error : errorRef.get();

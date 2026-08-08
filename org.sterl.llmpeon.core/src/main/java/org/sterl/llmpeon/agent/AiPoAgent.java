@@ -55,14 +55,14 @@ public class AiPoAgent extends AbstractAgent {
     }
 
     /**
-     * Jon's visible team for the header status widget (ADR-0025): <b>Da Boss</b> (Jon himself) first,
+     * Jon's visible slaves for the header status widget (ADR-0025): <b>Da Boss</b> (Jon himself) first,
      * then his ork slaves <b>Da Thinka</b> (Plan) and <b>Da Mek</b> (Dev). Always the same instances
      * {@code JonDelegateTool} drives, so the widget reads their live {@code isWorking()}/context.
      */
     public List<NamedAgent> getTeam() {
-        var team = new ArrayList<NamedAgent>(slaves.size() + 1);
+        var team = new ArrayList<NamedAgent>(this.slaves.size() + 1);
         team.add(new NamedAgent("Da Boss", this));
-        team.addAll(slaves);
+        team.addAll(this.slaves);
         return List.copyOf(team);
     }
 

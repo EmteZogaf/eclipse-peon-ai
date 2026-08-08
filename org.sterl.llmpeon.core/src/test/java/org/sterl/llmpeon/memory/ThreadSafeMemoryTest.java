@@ -2,11 +2,11 @@ package org.sterl.llmpeon.memory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.sterl.llmpeon.AbstractMemoryFileTest;
 import org.sterl.llmpeon.shared.ChatMessageUtil;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -16,7 +16,7 @@ import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.response.ChatResponse;
 
-class ThreadSafeMemoryTest {
+class ThreadSafeMemoryTest extends AbstractMemoryFileTest {
 
     @Test
     void testExtractLastOf() {
@@ -131,11 +131,31 @@ class ThreadSafeMemoryTest {
         assertThat(subject.messageFlow()).isEqualTo("USER->USER");
     }
 
+    @Test
+    void constructorEstimatesTokenCountFromLoadedMessages() {
+        // GIVEN
+        var store = new RecordingStoreWithMessages();
+        var messages = List.<ChatMessage>of(
+                UserMessage.from("A".repeat(5000)),
+                AiMessage.from("B".repeat(5000)),
+                UserMessage.from("C".repeat(5000)),
+                AiMessage.from("D".repeat(5000)),
+                UserMessage.from("E".repeat(5000))
+        );
+        store.setMessages(messages);
+
+        // WHEN
+        var subject = new ThreadSafeMemory(store);
+
+        // THEN — estimateTokens = chars/4 (25000/4=6250), then /3 ≈ 2083
+        assertThat(subject.getTotalTokenUsed()).isGreaterThan(0).isBetween(2000, 2200);
+    }
+
     private static class RecordingStore extends FileAgentHistoryStore {
         final List<String> operations = new ArrayList<>();
 
         RecordingStore() {
-            super(Path.of("/unused"));
+            super(tmp);
         }
 
         @Override
@@ -156,6 +176,23 @@ class ThreadSafeMemoryTest {
         @Override
         public void clear() {
             operations.add("clear");
+        }
+    }
+
+    private static class RecordingStoreWithMessages extends FileAgentHistoryStore {
+        private List<ChatMessage> loadedMessages = List.of();
+
+        RecordingStoreWithMessages() {
+            super(tmp);
+        }
+
+        void setMessages(List<ChatMessage> messages) {
+            this.loadedMessages = messages;
+        }
+
+        @Override
+        public List<ChatMessage> load() {
+            return loadedMessages;
         }
     }
 }

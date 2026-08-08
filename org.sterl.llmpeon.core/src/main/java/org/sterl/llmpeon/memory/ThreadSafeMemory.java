@@ -34,7 +34,10 @@ public class ThreadSafeMemory {
 
     public ThreadSafeMemory(FileAgentHistoryStore store) {
         this.store = store;
-        if (store != null) memory.addAll(store.load());
+        if (store != null) {
+            memory.addAll(store.load());
+            totalTokenUsed = ChatMessageUtil.getTokenCount(null, new ArrayList<>(memory)) / 3;
+        }
     }
 
     /**

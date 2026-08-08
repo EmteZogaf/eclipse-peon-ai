@@ -129,3 +129,11 @@ AIChatView.handleDoneChatResponse():
 - **`AbstractAgent.messageQueue`**: core-owned instance; survives compaction (outside `AiAgent.getMemory()`).
 - **`AbstractAgent.call()`**: internal do-while loop chains queued messages atomically within a single invocation.
 - **`AIChatView`**: simplified — only locks/unlocks UI, reads `active.isWorking()`, delegates queue operations to agent.
+
+
+## LLM Instruction for Agents
+Agents run inside a message harness that buffers inputs asynchronously. Due to FIFO processing and async tool execution, older messages may arrive delayed — even while the agent is actively waiting for a response.
+
+- **Inputs are async (FIFO, order uncertain).** For guaranteed answers: use the `askUser` tool.
+- **Otherwise:** If a message is prefixed with `[Queued Message]`, it is **not** a reply to your last question. Acknowledge it briefly, re-ask your question if necessary, or treat the question as unanswered.
+- *Context & Prompt adjustments:* See [PO Agent System Prompt](po.md) and `prompts/po.txt` for the agent-facing instructions solving this alignment problem.

@@ -16,6 +16,8 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 * [Per-Agent Think Support](per-agent-think.md) - per-agent thinking support and request-value resolution via provider mapping files and AGENT.md frontmatter.
 * [Queued User Messages](queued-user-messages.md) - input queue with batching, FIFO consumption, drain-to-memory on abort.
 * [Session Token Usage](token-usage.md) - cumulative ↑/↓ token spend in the header, fed from the StreamingBridge choke point.
+* [Slave Token Usage nicht im Header](slave-token-usage-not-reported.md) - **🚧 Bug.** Header-Stats zählen Jon's Agenten (Da Thinka/Da Mek) nicht mit; Monitor-Kette verifizieren.
+* [Da Mek Shell & Autonomous](po-agent-jon.md) - **🚧 Korrekturen.** Da Mek braucht ShellTool (Filter war zu aggressiv); gilt als autonom für Shell-Bestätigung (`not-autonomous` unterdrückt Frage).
 * [Scaffold Agent](scaffold-agent.md) - built-in agent for creating/editing Peon config artifacts (agents, skills, commands) with config-scoped disk tools.
 * [Standing Orders](standing-orders-design.md) - context lines (project, AGENTS.md, active command/skill) that survive mid-loop compaction.
 * [AGENTS.md Support](agents-md-support.md) - base AGENTS.md loading: purpose, file name resolution, toggle.
@@ -25,6 +27,7 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 * [Persistent Agent History](persistent-agent-history.md) - JSONL chat history persistence for Dev, Plan and custom agents.
 * [Streaming Response Display](streaming-display.md) - status-bar overlay with bounded live preview, single DOM insert on completion, no incremental chat rendering.
 * [Sub-agent tool timing](sub-agent-timing.md) - the sub-agent tools (talkPlan/planWithPlanAgent/askDev/buildWithAgent, searchAgent, compactSession) append the nested agent's wall-clock to their done line, e.g. `done. (3s)`.
+* [Search Agent Tool (Da Sniffa)](search-agent-tool.md) - stateless one-shot research sub-agent: read-only tools, dedicated search model, thinking disabled, no shell/ask/memory.
 * [Agenten-Namen im Chat-Header](agenten-namen-im-chat.md) - **WIP-Design.** AI-Header zeigt den sprechenden Agenten (Peon-PO/-Plan/-Dev, Custom-Agents, Da Sniffa/Da Scribe) statt „Peon"; Name reist auf dem `ToolLoopRequest` mit, kein Monitor-Umbau.
 * [Agenten-Status im Header](agenten-status-im-header.md) - **Wird neu gebaut** (siehe MVP-Plan). Alte Umsetzung (active-scoped Roster + `onSubAgent`-Chips) zeigte Agenten doppelt.
 * [Agenten-Status Header — MVP-Neubau (Plan)](agenten-status-im-header-mvp-plan.md) - **WIP-Plan.** Pull/MVC statt Observer ([ADR-0025](adr/0025-po-status-widget-named-agents.md)): `AiPoAgent.getTeam()` → `List<NamedAgent>` (Ork-Sklaven Da Thinka/Da Mek) → `AiAgentStatusWidget`; ein `instanceof`-Choke-Point in `PeonAiService`; `getRoster`/`onSubAgent`/`workingSubAgents` fallen weg. Inkremente einzeln baubar.
@@ -35,4 +38,5 @@ notes live in [adr/](adr/index.md). Not published — user-facing docs are in `h
 
 ## Notes
 
+* [Open to Discuss](open-to-discuss.md) - ambiguous items not clear as bugs or features yet; reviewed end-of-cycle.
 * [ADRs](adr/index.md) - technical decision records (the agent's long-term memory).

@@ -2,6 +2,8 @@ package org.sterl.llmpeon;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sterl.llmpeon.agent.AiDevAgent;
@@ -44,6 +46,7 @@ public class AiServicePerAgentThinkTest {
         var config = LlmConfig.builder()
                 .providerType(AiProvider.OPEN_AI_OFFICIAL)
                 .model("kimi-k2")
+                .timeout(Duration.ofSeconds(5))
                 .planModel("gpt-5.5").planThinkSupported(true).planThinkOnString("high")
                 .build();
 
@@ -73,6 +76,7 @@ public class AiServicePerAgentThinkTest {
     void devManualThinkSupportedOnStringApplies() {
         var config = LlmConfig.builder()
                 .providerType(AiProvider.OPEN_AI_OFFICIAL)
+                .timeout(Duration.ofSeconds(5))
                 .model("gpt-5.5")
                 .thinkSupported(true).thinkOnString("medium")
                 .build();

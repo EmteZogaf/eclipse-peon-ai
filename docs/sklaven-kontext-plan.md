@@ -64,7 +64,7 @@ Getter-Frage geklärt = **ja**: `AiAgent.getStaticContext()` als default (leer),
 
 **Inc 3 — Backlog: `AGENTS-DEV.md` / `AGENTS-PLAN.md` per Sklave.**
 Die sklaven-spezifische AGENTS-Datei korrekt **pro Sklave** keyen (Da Mek→`DEV`, Da Thinka→`PLAN`),
-statt auf den aktiven Agenten (Jon→`PO`). Mehr als ein Einzeiler (eigener Resolver-Pfad) → separat.
+statt auf den aktiven Sklaven (Jon→`PO`). Mehr als ein Einzeiler (eigener Resolver-Pfad) → separat.
 
 ## Offen
 - Nur noch **Inc 3** (Backlog, s.o.): `AGENTS-DEV.md`/`AGENTS-PLAN.md` per Sklave keyen.

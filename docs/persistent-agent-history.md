@@ -17,6 +17,7 @@ Persist the current chat memory for Peon-Dev, Peon-Plan, and custom agents acros
 - ✅ Corrupt history is logged, deleted, ignored, and startup continues with empty history.
 - ✅ If a save fails, the error is surfaced once and `ThreadSafeMemory` disables history persistence for that session.
 - ✅ Token totals are not persisted.
+- ✅ On history restore, `totalTokenUsed` is estimated as ~1/3 of `ChatMessageUtil.getTokenCount()` on the loaded messages (not 0), so the Compact UI shows a realistic value immediately.
 
 ## BDD
 
@@ -152,3 +153,12 @@ WHEN `getTemperature()` is called
 THEN it returns `1.0`.
 
 Status: ✅ `AiPlanAgentTest.getTemperatureReturnsPlanTemperature`
+
+### Scenario 14 — Token estimation on history restore
+
+GIVEN a persisted JSONL file with 5000 tokens of chat messages  
+WHEN `ThreadSafeMemory` is constructed with a `FileAgentHistoryStore` that loads these messages  
+THEN `totalTokenUsed` is set to approximately 1/3 of the loaded token count (≈1667)  
+AND the Compact UI shows a realistic non-zero value immediately.
+
+Status: ✅ `ThreadSafeMemoryTest.constructorEstimatesTokenCountFromLoadedMessages`

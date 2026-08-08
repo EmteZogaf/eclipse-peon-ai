@@ -30,12 +30,12 @@ bekommen eigene Ork-Identitäten.**
   öffentliche UI-Identität des Sklaven; die Namenskollision verschwindet **by construction**.
 - **Der Agent besitzt sein Team.** `AiPoAgent` hält sein Team als
   `List<NamedAgent(String uiName, AiAgent agent)>` in fester Reihenfolge — **Da Boss** (Jon selbst),
-  **Da Thinka** (Plan), **Da Mek** (Dev) — und gibt es über `getTeam()` heraus. Die zwei Sklaven werden
+  **Da Thinka** (Plan), **Da Mek** (Dev) — und gibt es über `getTeam()` heraus. Die zwei Agenten werden
   **einmal erzeugt** und von `AiPoAgent` **und** `JonDelegateTool` geteilt — die Slave-**Factory-
   Supplier** in `JonDelegateTool` fallen weg (eine Instanz, ein Besitzer). Die Ork-/Boss-Namen sind hier
   die **einzige Quelle**; `JonDelegateTool` zieht seinen Log-`uiName` daraus statt Literale zu doppeln.
 - **Blatt-Regel für den Boss.** Da Boss ist der Orchestrator und darf nicht gleichzeitig mit einem
-  Sklaven glühen: `working` = `isWorking() && kein Sklave arbeitet`. So glüht Jon beim eigenen Denken,
+  Agenten glühen: `working` = `isWorking() && kein Sklave arbeitet`. So glüht Jon beim eigenen Denken,
   aber während der Delegation trägt der Sklave den Ball (kein „🟢 immer auf Jon"). Die Regel lebt im
   Pure-Model, nicht im Widget.
 - **Pull statt Observer.** `AiAgentStatusWidget` bekommt `Supplier<List<NamedAgent>>` und **rendert
@@ -58,7 +58,7 @@ bekommen eigene Ork-Identitäten.**
   **nichts**. Die frühere „aktiver-Agent-Kontextzeile" und der **Search-Chip** entfallen. `AiMonitor.onSubAgent` bleibt als
   ruhende No-op-Default stehen (kein Konsument mehr), damit Search **später** als eigenes transientes
   Konzept nachrüstbar ist — ohne es erneut auf Agenten-Namen zu legen.
-- Die Sklaven werden **eager** erzeugt (leer/0k bis zur ersten Delegation) statt lazy — billig, RAM-only
+- Die Agenten werden **eager** erzeugt (leer/0k bis zur ersten Delegation) statt lazy — billig, RAM-only
   (ändert nichts an [ADR-0024](0024-po-slaves-ram-only.md): weiterhin kein History-File).
 - Ein zweiter Orchestrator wäre ein 2-Zeilen-Upgrade: Rollen-Interface `AgentTeamProvider` extrahieren
   und den einen `instanceof` tauschen — **YAGNI** bis dahin.

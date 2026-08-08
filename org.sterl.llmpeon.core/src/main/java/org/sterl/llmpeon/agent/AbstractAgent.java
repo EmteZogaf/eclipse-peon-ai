@@ -182,9 +182,11 @@ public abstract class AbstractAgent implements AiAgent {
                     throw e;
                 }
                 // check if we have waiting messages
-                var pendingNext = messageQueue.pollNext(); // FIFO drain
-                if (pendingNext != null) monitor.onTool("Reading queued User message: " + pendingNext);
-                next = pendingNext;
+                next = messageQueue.pollNext(); // FIFO drain
+                if (next != null) {
+                    monitor.onTool("Reading queued User message: " + next);
+                    next = "[Queued Message]: " + next;
+                }
             } while (next != null && lastResponse != null && !monitor.isCanceled());
 
             // Drain remaining queue on cancellation exit from loop

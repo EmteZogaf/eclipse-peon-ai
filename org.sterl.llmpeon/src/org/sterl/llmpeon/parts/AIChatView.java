@@ -33,6 +33,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkingSet;
 import org.sterl.llmpeon.StandingOrdersBuilder;
 import org.sterl.llmpeon.agent.AiAgent;
+import org.sterl.llmpeon.agent.AiPlanAgent;
 import org.sterl.llmpeon.ai.LlmConfig;
 import org.sterl.llmpeon.command.SlashCommandResolver;
 import org.sterl.llmpeon.command.SlashCommandResolver.SlashResult;
@@ -196,12 +197,12 @@ public class AIChatView implements EclipseAiMonitor {
         var dateInfo = "Today: " + LocalDate.now() 
                 + " — APIs and libraries may have changed since your training cutoff. "
                 + "Don't rely only on internal API knowledge — explore base classes and libs if possible with e.g. using "
-                + EclipseCodeNavigationTool.GET_TYPE_SOURCE + " for java."
+                + EclipseCodeNavigationTool.GET_TYPE_SOURCE + " for java projects."
                 + "\nos.name: " + System.getProperty("os.name")
                 + "\nos file.separator: '" + System.getProperty("file.separator") + "'"
                 + "\nos line.separator: '" + System.lineSeparator() + "'"
-                + "\nFile access: prefer eclipse* tools over disk* tools. After disk* writes, call eclipseRefreshProject (refresh only) or eclipseBuildProject (refresh + build check) to sync Eclipse."
-                + "\nOutside the workspace, use Disk-tools if available this session; if not, ask the user to enable them. Never use shell/terminal for file I/O.";
+                + "\nFile access: prefer eclipse* over disk* tools. After disk* writes, call eclipseRefreshProject (refresh only) or eclipseBuildProject (refresh + build check) to sync Eclipse."
+                + "\nOutside the workspace, use Disk-tools if available; if not, ask the user to enable them. Never use shell/terminal for file I/O.";
 
         aiService.setStaticContext(Arrays.asList(SystemMessage.from(dateInfo)));
 
@@ -445,12 +446,13 @@ public class AIChatView implements EclipseAiMonitor {
 
     private void applyShellCommandConfirmation() {
         var prefs = InstanceScope.INSTANCE.getNode(PeonConstants.PLUGIN_ID);
-        var autonomous = false; // TODO restore autonomus mode
+        var autonomous = this.aiService.getActiveAgent() instanceof AiPlanAgent;
 
         // TODO move into own class?
-        if ("true".equalsIgnoreCase(prefs.get(PeonConstants.PREF_SHELL_CONFIRMATION_ENABLED, "")) ||
-                "always".equalsIgnoreCase(prefs.get(PeonConstants.PREF_SHELL_CONFIRMATION_ENABLED, "")) ||
-                (!autonomous && "not-autonomous".equalsIgnoreCase(prefs.get(PeonConstants.PREF_SHELL_CONFIRMATION_ENABLED, "")))) {
+        var shellSetting = prefs.get(PeonConstants.PREF_SHELL_CONFIRMATION_ENABLED, "");
+        if ("true".equalsIgnoreCase(shellSetting) ||
+                "always".equalsIgnoreCase(shellSetting) ||
+                (!autonomous && "not-autonomous".equalsIgnoreCase(shellSetting))) {
             // TODO is this always needed??!?
             aiService.getSharedToolService().getTool(ShellTool.class).ifPresent(shellTool -> {
                 shellTool.setConfirmationProvider((command, workingDirectory) -> {

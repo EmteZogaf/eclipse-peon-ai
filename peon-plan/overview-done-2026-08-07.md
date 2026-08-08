@@ -11,7 +11,7 @@
 **File:** `docs/po-agent-jon.md`
 
 **Changes:**
-1. **I2.2 (line ~130):** `created **lazily** on first` → `created **eagerly** on Jon activation` (ADR-0025: "Die Sklaven werden **eager** erzeugt (leer/0k bis zur ersten Delegation)")
+1. **I2.2 (line ~130):** `created **lazily** on first` → `created **eagerly** on Jon activation` (ADR-0025: "Die Agenten werden **eager** erzeugt (leer/0k bis zur ersten Delegation)")
 2. **R9 title (line ~513):** `Slave lifecycle — lazy persistent singletons` → `Slave lifecycle — eager persistent singletons`
 3. **R9 body (line ~514):** `Each is created **lazily** — the first Plan-side call … creates the Plan slave` → `Each is created **eagerly** on Jon activation (empty/0k until first delegation) and **kept alive** …`
 4. **ADR reference (line ~735):** `lazy persistent` → `eager persistent`

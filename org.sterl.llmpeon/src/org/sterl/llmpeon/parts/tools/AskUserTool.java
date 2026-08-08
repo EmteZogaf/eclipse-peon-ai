@@ -28,11 +28,11 @@ public class AskUserTool extends AbstractEclipseTool {
         this.presenter = presenter;
     }
 
-    @Tool("Ask the user a clarifying question. Include possible answers, your recommendation first.")
+    @Tool("Ask the user a clarifying question – guarantees a matching answer despite async, FIFO, order-unsafe chat inputs.")
     public String askUser(
-            @P(name = "question", description = "the question to present to the user") 
+            @P(name = "question") 
             String question,
-            @P(name = "predefinedAnswers", description = "optional list of answer choices shown as radio buttons", required = false) 
+            @P(name = "predefinedAnswers", description = "optional list of answers shown as radio buttons e.g. recommended answer first", required = false) 
             List<String> predefinedAnswers) {
 
         var latch = new CountDownLatch(1);

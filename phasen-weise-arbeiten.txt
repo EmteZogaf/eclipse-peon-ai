@@ -24,7 +24,7 @@ DAS GRUNDMUSTER (in Reihenfolge)
    sie zu flicken. "Fix the class of bug, not the instance."
 
 3. DEN PLAN-AGENTEN NACH DER EINFACHEN LÖSUNG SUCHEN LASSEN — nicht selbst
-   drauflosbauen. Der Plan-Sklave bekommt den expliziten Auftrag: finde die
+   drauflosbauen. Der Peon-Plan bekommt den expliziten Auftrag: finde die
    SIMPELSTE Lösung, die das Ziel erfüllt. "Kleinste Änderung, die den Nutzer
    zufriedenstellt." Komplexität ist Bringschuld, nicht Default.
 
@@ -89,6 +89,6 @@ WARUM DAS GEWINNT
 DER EINE SATZ
 -------------
 
-Kleiner Plan → Architektur als ADR abgesprochen → Plan-Sklave sucht die einfachste
+Kleiner Plan → Architektur als ADR abgesprochen → Peon-Plan sucht die einfachste
 Lösung → Review challengt den Plan BEVOR gebaut wird → dann Inkrement für Inkrement
 bauen, jedes voll grün, additiv aufbauen und den Alt-Pfad zuletzt entfernen.
