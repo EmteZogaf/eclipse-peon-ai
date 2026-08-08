@@ -4,6 +4,12 @@ A lightweight, context-aware LLM assistant that integrates directly into your Ec
 
 ![Example](./homepage/src/assets/example.png)
 
+## Autonomus mode is back
+
+Jon and team are in the house. Single threaded for now - for best local performance.
+
+[Produkt PO Jon](https://peon-ai-4e.sterl.org/setup/peon-po)
+
 ## Features
 
 - **Chat Interface** - Interactive AI chat with syntax-highlighted code blocks and markdown rendering
