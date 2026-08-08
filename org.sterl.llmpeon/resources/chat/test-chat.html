@@ -1,0 +1,182 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Chat UI Test Harness</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+        .test-panel {
+            width: 320px;
+            min-width: 320px;
+            background: #f8f9fa;
+            border-right: 1px solid #ddd;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .test-panel h2 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            color: #333;
+        }
+        .test-panel h3 {
+            margin: 16px 0 8px;
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .test-btn {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: left;
+        }
+        .test-btn:hover { background: #e8f4fd; border-color: #0969da; }
+        .test-btn:active { background: #d0e8f7; }
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-frame {
+            flex: 1;
+            border: none;
+        }
+        .info {
+            font-size: 11px;
+            color: #888;
+            margin-top: 8px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-panel">
+        <h2>Chat UI Test Harness</h2>
+        <p style="font-size:12px;color:#666;">Sends messages to chat.html via postMessage.</p>
+
+        <h3>Messages</h3>
+        <button class="test-btn" onclick="testUserMessage()">User Message</button>
+        <button class="test-btn" onclick="testAiMessage()">AI Message (with code)</button>
+        <button class="test-btn" onclick="testToolMessage()">Tool Message</button>
+        <button class="test-btn" onclick="testProblemMessage()">Problem Message</button>
+        <button class="test-btn" onclick="testMultipleMessages()">Multiple Alternating</button>
+
+        <h3>Streaming</h3>
+        <button class="test-btn" onclick="testLiveResponseThinking()">Live Response (thinking)</button>
+        <button class="test-btn" onclick="testLiveResponseAnswering()">Live Response (answering)</button>
+        <button class="test-btn" onclick="streamingSequence()">Live → AI Message → Finish</button>
+
+        <h3>Diffs</h3>
+        <button class="test-btn" onclick="testDiff()">Sample Diff</button>
+
+        <h3>Controls</h3>
+        <button class="test-btn" onclick="clearAll()">Clear All</button>
+
+        <div class="info">
+            <strong>Source of truth:</strong> chat.html is loaded in the iframe.<br>
+            All messages are sent via postMessage.<br>
+            Edit chat.html directly — test harness reflects changes immediately.
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <iframe class="chat-frame" src="./chat.html" sandbox="allow-same-origin allow-scripts"></iframe>
+    </div>
+
+    <script>
+        const iframe = document.querySelector('.chat-frame');
+        let iframeReady = false;
+
+        iframe.addEventListener('load', () => { iframeReady = true; });
+
+        function send(data) {
+            if (!iframeReady) {
+                setTimeout(() => send(data), 100);
+                return;
+            }
+            iframe.contentWindow.postMessage(data, '*');
+        }
+
+        // Test functions
+        function testUserMessage() {
+            send({role: 'USER', message: 'Hello, can you help me with this Java code?'});
+        }
+
+        function testAiMessage() {
+            send({role: 'AI', message: 'Of course! Here\'s a simple example:\n\n```java\npublic class Hello {\n    public static void main(String[] args) {\n        System.out.println("Hello!");\n    }\n}\n```'});
+        }
+
+        function testToolMessage() {
+            send({role: 'TOOL', message: 'Reading file: src/main/java/Hello.java'});
+        }
+
+        function testProblemMessage() {
+            send({role: 'PROBLEM', message: 'Error: Could not find method processData()'});
+        }
+
+        function testMultipleMessages() {
+            send({role: 'USER', message: 'First user message'});
+            send({role: 'AI', message: 'First AI response with **bold** and *italic*.'});
+            send({role: 'USER', message: 'Second user message'});
+            send({role: 'AI', message: 'Second AI response.'});
+        }
+
+        function testLiveResponseThinking() {
+            send({type: 'updateLiveResponse', state: 'working since 2s | thinking...', tokPerSec: 25.5, chunk: 'Analyzing the code structure...'});
+        }
+
+        function testLiveResponseAnswering() {
+            send({type: 'updateLiveResponse', state: 'working since 3s | responding...', tokPerSec: 45.2, chunk: 'Here\'s the solution...'});
+        }
+
+        function testDiff() {
+            var diff = '--- a/src/main/java/UserService.java\n';
+            diff += '+++ b/src/main/java/UserService.java\n';
+            diff += '@@ -10,5 +10,8 @@\n';
+            diff += '     private final List<String> users;\n';
+            diff += '     \n';
+            diff += '+    /**\n';
+            diff += '+     * Returns only active users.\n';
+            diff += '+     */\n';
+            diff += '     public List<String> getActiveUsers() {\n';
+            diff += '-        return users;\n';
+            diff += '+        return users.stream()\n';
+            diff += '+            .filter(u -> !u.startsWith("deleted:"))\n';
+            diff += '+            .collect(Collectors.toList());\n';
+            diff += '     }\n';
+            send({type: 'appendDiff', diff: diff});
+        }
+
+        function clearAll() {
+            send({type: 'clearMessages'});
+        }
+
+        function streamingSequence() {
+            send({type: 'updateLiveResponse', state: 'working since 1s | thinking...', tokPerSec: 30, chunk: 'Analyzing...'});
+            setTimeout(() => {
+                send({type: 'updateLiveResponse', state: 'working since 2s | responding...', tokPerSec: 50, chunk: 'Here\'s the answer...'});
+            }, 1000);
+            setTimeout(() => {
+                send({type: 'hideLiveStatus'});
+                send({role: 'AI', message: 'Here\'s the complete solution.'});
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

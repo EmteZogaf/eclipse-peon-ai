@@ -23,17 +23,6 @@
             padding: 2px 8px 4px 8px;
         }
 
-        .message::after {
-            content: "";
-            display: block;
-            border-bottom: 1px solid #e0e0e0;
-            margin-top: 4px;
-        }
-
-        .message:last-child::after {
-            border-bottom: none;
-        }
-
         /* Role label */
         .message::before {
             display: block;
@@ -62,6 +51,10 @@
         .message.AI::before {
             content: "Peon";
             color: #1a7f37;
+        }
+
+        .message.diff {
+            border-left: 3px solid #1a7f37;
         }
 
         .message.TOOL,
@@ -362,6 +355,31 @@
         function clearMessages() {
             document.getElementById("chat").innerHTML = "";
         }
+
+        // postMessage handler for Java host and test harness
+        window.addEventListener("message", function(event) {
+            if (!event.data) return;
+            // Java sends SimpleMessage directly (no type field) or typed commands
+            if (event.data.role) {
+                // SimpleMessage: {role: "AI", message: "..."}
+                appendMessage(event.data);
+            } else if (event.data.type) {
+                switch (event.data.type) {
+                    case "updateLiveResponse":
+                        updateLiveResponse(event.data.state, event.data.tokPerSec, event.data.chunk);
+                        break;
+                    case "hideLiveStatus":
+                        hideLiveStatus();
+                        break;
+                    case "appendDiff":
+                        appendDiff(event.data.diff);
+                        break;
+                    case "clearMessages":
+                        clearMessages();
+                        break;
+                }
+            }
+        });
     </script>
 </head>
 
