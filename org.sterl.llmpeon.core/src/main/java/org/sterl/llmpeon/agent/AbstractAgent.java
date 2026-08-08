@@ -43,16 +43,30 @@ public abstract class AbstractAgent implements AiAgent {
 
     private final LinkedHashSet<ChatMessage> staticContext = new LinkedHashSet<>();
     private final LinkedHashSet<String> userContextInformations = new LinkedHashSet<>();
-    
+
+    /**
+     * Fraction of the shared auto-compact budget at which THIS agent compacts (1.0 = the full
+     * {@link org.sterl.llmpeon.ai.LlmConfig#getAutoCompactAfter() budget}). Jon's RAM-only slaves set it
+     * below 1.0 so they compact earlier and keep their throw-away context lean.
+     */
+    private final double compactFactor;
+
     protected AbstractAgent(ConfiguredChatModel configuredModel, ToolService toolService) {
         this(configuredModel, toolService, new ThreadSafeMemory());
     }
 
     protected AbstractAgent(ConfiguredChatModel configuredModel, ToolService toolService, ThreadSafeMemory memory) {
+        this(configuredModel, toolService, memory, 1.0);
+    }
+
+    protected AbstractAgent(ConfiguredChatModel configuredModel, ToolService toolService, ThreadSafeMemory memory,
+            double compactFactor) {
         this.toolService = toolService;
         this.configuredModel = configuredModel;
         this.memory = Objects.requireNonNull(memory, "ThreadSafeMemory cannot be null");
-        
+        // Clamp to (0,1]; a nonsense factor falls back to the full budget rather than compacting forever.
+        this.compactFactor = compactFactor > 0 && compactFactor <= 1.0 ? compactFactor : 1.0;
+
         Objects.requireNonNull(this.configuredModel, "ConfiguredChatModel cannot be null");
         Objects.requireNonNull(this.toolService, "ToolService cannot be null");
     }
@@ -132,6 +146,15 @@ public abstract class AbstractAgent implements AiAgent {
         return Math.round(100f * used / Math.min(configuredModel.getConfig().getAutoCompactAfter(), 4000));
     }
 
+    /**
+     * Token count at which this agent auto-compacts before a turn: the shared
+     * {@link org.sterl.llmpeon.ai.LlmConfig#getAutoCompactAfter() budget} scaled by this agent's
+     * {@code compactFactor} (1.0 = full budget; slaves use less, so they compact earlier).
+     */
+    public int compactAfterTokens() {
+        return (int) Math.round(configuredModel.getConfig().getAutoCompactAfter() * compactFactor);
+    }
+
     public boolean hasUserText(String message) {
         if (StringUtil.hasNoValue(message)) return true;
         return this.memory.containsUserMessage(message);
@@ -154,13 +177,14 @@ public abstract class AbstractAgent implements AiAgent {
             do {
                 try {
                     lastResponse = doCall(next, monitor);
-                    
-                    next = messageQueue.pollNext(); // FIFO drain
-                    if (next != null) monitor.onTool("Reading queued User message: " + next);
                 } catch (Exception e) {
                     handleAbortAndDrain(monitor);
                     throw e;
                 }
+                // check if we have waiting messages
+                var pendingNext = messageQueue.pollNext(); // FIFO drain
+                if (pendingNext != null) monitor.onTool("Reading queued User message: " + pendingNext);
+                next = pendingNext;
             } while (next != null && lastResponse != null && !monitor.isCanceled());
 
             // Drain remaining queue on cancellation exit from loop
@@ -199,8 +223,8 @@ public abstract class AbstractAgent implements AiAgent {
     protected ChatResponse doCall(String message, AiMonitor monitor) {
         monitor = AiMonitor.nullSafety(monitor);
         monitor.onCallStart(message);
-        // auto compress if we are close to full before we start
-        if (configuredModel.getConfig().getAutoCompactAfter() < memory.getTotalTokenUsed()) compressContext(monitor);
+        // auto compress if we are close to full before we start (slaves trigger earlier via compactFactor;
+        if (compactAfterTokens() < memory.getTotalTokenUsed()) compressContext(monitor);
 
         LinkedList<String> standingOrders;
         synchronized (userContextInformations) {
@@ -230,6 +254,7 @@ public abstract class AbstractAgent implements AiAgent {
                     .monitor(monitor)
                     .toolFilter(getToolFilter())
                     .toolNameFilter(getToolNameFilter())
+                    .writeValidator(getWriteValidator())
                     .agentConfig(getConfig())
                     .standingOrders(standingOrders)
                     .build()
@@ -252,6 +277,11 @@ public abstract class AbstractAgent implements AiAgent {
     public void setStaticContext(Collection<ChatMessage> staticContext) {
         this.staticContext.clear();
         if (staticContext != null) this.staticContext.addAll(staticContext);
+    }
+
+    @Override
+    public List<ChatMessage> getStaticContext() {
+        return new ArrayList<>(staticContext);
     }
     
     public void setUserContextInformations(Collection<String> userContextInformations) {

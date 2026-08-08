@@ -6,6 +6,10 @@
 
 The plan/dev agent system uses a **two-phase, user-controlled workflow** with optional manual handoff.
 
+> An **orchestration layer** on top of this flow is designed in [Peon-PO (Jon)](po-agent-jon.md): a
+> docs-owning agent that drives its own Plan/Dev instances via `jon*` tools with `planComplete` /
+> `planImplemented` completion signals. The one-shot handoff described here stays the standalone path.
+
 ```mermaid
 graph LR
     A[User] -->|send| B(AiPlanAgent)

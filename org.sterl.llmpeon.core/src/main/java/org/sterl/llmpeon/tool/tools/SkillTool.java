@@ -29,14 +29,14 @@ public class SkillTool extends AbstractTool {
             return "No skill with the name " + name 
                     + " found. Use one of: " + skillService.skillNames();
         }
-        onTool("Read SKILL " + name);
+        onTool("Reading SKILL 🧩 " + name);
         return skill.get().renderBody();
     }
     
     @Tool("List all active SKILL - use it before complex tasks, to verify if a skill is available.")
     public String skillList() throws IOException, InterruptedException {
-        onTool("List SKILLs");
         List<SkillPromptFile> skills = skillService.getSkills();
+        onTool("List SKILLs 🧩: " + skills.size());
         return skills.isEmpty() 
                 ? "No skills available"
                 : skills.stream().map(SkillPromptFile::buildShortInfo).collect(Collectors.joining("\n"));

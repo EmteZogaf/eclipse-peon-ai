@@ -1,6 +1,7 @@
 # Plan Phase — the WHAT
 
-Goal plan docs and ADRs. It is the durable second brain which survives any plan — a future session must be able to rebuild the intent and design from the docs alone.
+Goal: plan the docs and ADRs — the durable second brain that outlives any single plan. A future
+session must be able to rebuild the intent and design from the docs alone.
 
 **If your tool didn't auto-load it, read the always-on base `AGENTS.md` first** — this file only adds the plan-phase rules on top.
 
@@ -29,7 +30,7 @@ compress runs unprompted. Check the existing docs to rebuild the state, plan cha
 - Traverse goal → affected area → constraints → architecture → exact files/classes.
 - Cache file paths in the plan — never re-search during implementation.
 
-## Capture the system design in docs, never only chat
+## Plan the system design and doc changes, never only chat
 - **Story = the WHAT** (`docs/<feature>.md`, no `-design` suffix): a short **goal** (why), then
   **business rules**, each with **BDD use-cases** (GIVEN/WHEN/THEN — happy path, edge, failure; each
   maps to a concrete test name).
@@ -66,14 +67,15 @@ compress runs unprompted. Check the existing docs to rebuild the state, plan cha
 
 ## Large stories — split docs from code, then hand over
 When a story is too big for one session (the code won't fit):
-1. **First plan the docs only, in one atomic step** — capture the full story (goal + all rules + BDD,
-   marked ❌) + ADRs, so the knowledge is never lost.
+1. **First a docs-only increment** — the plan captures the full story (goal + all rules + BDD,
+   marked ❌) + ADRs; the dev agent writes them to `docs/` first, code-free, so the knowledge is
+   never lost.
 2. **Compact the session** once the docs land.
 3. **Then plan each dev slice as its own plan** — a coherent subset of ❌ rules, foundation-first —
    implement + test it, flip ❌→✅. Propose the split yourself.
-4. **Handover:** a finished plan hands over to the dev agent. Right after the docs-only update there is
-   **no implementable slice yet**, so the dev agent must **push back and ask the plan agent for the
-   first dev-plan** rather than coding from the docs directly. Each slice is one iteration
+4. **Handover:** a finished plan hands over to the dev agent, which then self-drives the slices.
+   The docs-only increment ends at the docs — there is **no implementable slice yet**, so the dev
+   agent stops there rather than coding from the docs. Each following slice is one iteration
    (see AGENTS-SESSION-END.md).
 
 ## Components

@@ -6,8 +6,10 @@ project-specific conventions. **If your tool didn't auto-load it, read the alway
 
 ## Handover in
 - You implement a **concrete dev-plan** — a coherent slice of **❌** rules from the story.
-- If only the docs exist (a docs-only update just landed) and there is **no dev-plan yet**, **push back
-  and ask the plan agent for the first dev-plan** — do not code straight from the docs.
+- **Self-drive the slices** — split a too-big story into your own `task-NN-<name>.md`, cut on
+  module / package level to have small work packages, and work them in order.
+- **A docs-only iteration ends at the docs** — if a plan increment only captured the story + ADRs
+  (no ❌ slice picked yet), stop there; don't code straight from the docs.
 - Implement the slice with tests (BDD green), then flip those rules **❌ → ✅** in the story.
 
 <!-- COMMON CODE START -->

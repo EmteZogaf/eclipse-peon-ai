@@ -1,10 +1,17 @@
 package org.sterl.llmpeon.ai;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sterl.llmpeon.agent.AiCompressorAgent;
 import org.sterl.llmpeon.agent.AiDevAgent;
 import org.sterl.llmpeon.mock.MockLlmServer;
 import org.sterl.llmpeon.shared.AiMonitor;
@@ -12,6 +19,7 @@ import org.sterl.llmpeon.tool.ToolService;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.request.ChatRequest;
 
 /**
  * https://github.com/langchain4j/langchain4j/blob/main/docs/docs/tutorials/agents.md
@@ -61,5 +69,21 @@ class AiCompressorAgentTest {
 
         // AND
         assertTrue(subject.getMemory().size() <= 2, "Chat messages aren't reduced! Still " + subject.getMemory().size());
+    }
+
+    @Test
+    void call_throws_on_null_response() {
+        // GIVEN — ConfiguredChatModel returns null (simulates streaming failure)
+        var configuredModel = mock(ConfiguredChatModel.class);
+        var config = LlmConfig.newOpenAi("test-key");
+        when(configuredModel.getConfig()).thenReturn(config);
+        when(configuredModel.callBlocking(any(ChatRequest.class), any(AiMonitor.class))).thenReturn(null);
+        var subject = new AiCompressorAgent(configuredModel);
+        List<dev.langchain4j.data.message.ChatMessage> messages = List.of(UserMessage.from("test message"));
+
+        // WHEN + THEN
+        assertThatThrownBy(() -> subject.call(messages, AiMonitor.NULL_MONITOR))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("AI call returned null");
     }
 }

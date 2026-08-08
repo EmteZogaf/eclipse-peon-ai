@@ -91,7 +91,7 @@ public class DiskFileWriteTool extends AbstractTool {
         }
     }
     
-    @Tool("Replace lines by line number. newContent may span multiple lines.")
+    @Tool("Precise, line-targeted updates/insert lines by line number. newContent may span multiple lines.")
     public void diskReplaceLines(
             @P(name = "filePath") String filePath,
             @P("line to replace (1-based)") Integer line,
@@ -200,6 +200,7 @@ public class DiskFileWriteTool extends AbstractTool {
     }
 
     private Path resolve(String path) {
+        validateWrite(path);
         return FileUtils.resolve(workingDir, path);
     }
 }

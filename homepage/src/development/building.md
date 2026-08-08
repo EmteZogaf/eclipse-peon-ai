@@ -29,10 +29,14 @@ mvn clean package
 
 To run the plugin in development mode:
 
-1. Import the project into Eclipse
-2. Create an Eclipse Application launch configuration
-3. Add arguments: `-clean -clearPersistedState`
-4. Run the launch configuration
+1. Install Eclipse IDE for RCP and RAP Developers
+2. Import the project into Eclipse using maven
+![import](../assets/import_project.png)
+3. IMPORTANT: Skip the tycho plugin install - as it starts conflicting with eclipse tycho plugin - resolve all later and finish
+![import](../assets/import_project_no_tycho.png)
+4. Create an Eclipse Application launch configuration
+5. Add arguments: `-clean -clearPersistedState`
+6. Run the launch configuration
 
 ## Known Issues
 
