@@ -15,7 +15,11 @@ view). Reuses `StringUtil.toK` for the `k` formatting used by the Compact button
 
 ### R1 — Accumulate real usage per response ✅
 Every LLM response adds its usage to the session totals: `sent += inputTokenCount`,
-`received += outputTokenCount`. Only real provider usage counts — no `chars/4` estimate.
+`received += outputTokenCount`. Only real provider usage counts in the header.
+
+**Fallback-Schätzung:** Falls ein Provider keine TokenUsage zurückgibt (z.B. bestimmte Ollama-Modelle),
+schätzt `ChatMessageUtil` via `chars / 3` (konservativ für Deutsch; `/4` wäre englischer Richtwert).
+Diese Schätzung fließt NICHT in die Header-Totals — sie dient nur der Kontext-Größen-Anzeige am Compact-Button.
 
 - **GIVEN** a turn with several tool-loop iterations **WHEN** each response returns usage
   **THEN** the totals grow by the summed input/output across iterations
