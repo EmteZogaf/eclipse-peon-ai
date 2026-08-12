@@ -88,6 +88,8 @@
         <button class="test-btn" onclick="testDiff()">Sample Diff</button>
 
         <h3>Controls</h3>
+        <button class="test-btn" onclick="testSetTheme('dark')">Set Dark Theme</button>
+        <button class="test-btn" onclick="testSetTheme('light')">Set Light Theme</button>
         <button class="test-btn" onclick="clearAll()">Clear All</button>
 
         <div class="info">
@@ -171,6 +173,10 @@
             diff += '+            .collect(Collectors.toList());\n';
             diff += '     }\n';
             send({type: 'appendDiff', diff: diff, colorScheme: 'light'});
+        }
+
+        function testSetTheme(theme) {
+            send({type: 'setTheme', theme: theme});
         }
 
         function clearAll() {

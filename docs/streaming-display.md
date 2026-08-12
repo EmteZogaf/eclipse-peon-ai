@@ -126,4 +126,13 @@ Both expose `getPartialAiMessage()` (thinking + text) so the caller can append i
 Ein Diff wird exakt einmal in den Chat eingefügt und verwendet das aktuelle Farbschema.
 
 - **GIVEN** a diff is provided **WHEN** `showDiff` is called **THEN** the diff is appended exactly once using the current theme
-- **Tag:** unit (verify `ChatMarkdownWidget.showDiff` calls `safeExecute` exactly once with theme parameter)
+- **Tag:** unit (verify `ChatMarkdownWidget.showDiff` calls `postMessage` exactly once with theme parameter)
+
+### R15 — UI Message Bridge aligned with Test Harness (postMessage) ✅
+
+Java und Test Harness verwenden identische `postMessage`-Verdrahtung für alle UI-Kommunikation.
+
+- **GIVEN** a message or diff needs to be sent to the UI **WHEN** Java calls the widget **THEN** it uses `browser.postMessage()` (via MessageEvent dispatch) with a JSON payload, identical to the test harness approach
+- **GIVEN** a typed command (setTheme, hideLiveStatus, clearMessages) is sent **WHEN** the message arrives **THEN** `chat.html` dispatches it via the `message` event listener using the `type` field
+- **GIVEN** a SimpleMessage (with `role` field) is sent **WHEN** the message arrives **THEN** it is routed to `appendMessage` directly
+- **Tag:** integration (verify test-chat.html covers all message types Java sends)
