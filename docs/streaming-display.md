@@ -136,3 +136,15 @@ Java und Test Harness verwenden identische `postMessage`-Verdrahtung für alle U
 - **GIVEN** a typed command (setTheme, hideLiveStatus, clearMessages) is sent **WHEN** the message arrives **THEN** `chat.html` dispatches it via the `message` event listener using the `type` field
 - **GIVEN** a SimpleMessage (with `role` field) is sent **WHEN** the message arrives **THEN** it is routed to `appendMessage` directly
 - **Tag:** integration (verify test-chat.html covers all message types Java sends)
+
+
+### R16 — Message Queue prevents loss during HTML load & agent switch ✅
+
+Alle UI-Nachrichten werden in einer Queue gepuffert, bis die HTML-Seite vollständig geladen und bereit ist (`browserReady = true`). Dies verhindert den Verlust von Aufrufen und Nachrichten, insbesondere beim Agentenwechsel oder nach `clear()`.
+
+- **GIVEN** the HTML page is not yet loaded (`browserReady == false`) **WHEN** a message is sent to the widget **THEN** the JSON payload is added to `pendingMessages` queue
+- **GIVEN** messages are queued and the HTML page finishes loading **WHEN** the `javaReady` title event fires **THEN** all queued messages are dispatched to the browser in order
+- **GIVEN** the chat is cleared during an agent switch **WHEN** `clear()` is called **THEN** the `pendingMessages` queue is cleared to prevent stale messages from the previous agent
+- **Tag:** unit (verify `ChatMarkdownWidget.postMessage` queues when not ready; verify `TitleListener` flushes queue)
+
+**Context:** Ohne Queue gehen Nachrichten beim Agentenwechsel oder nach einem `clear()` verloren, da die HTML-Seite kurzzeitig nicht empfangsbereit ist. Die Queue garantiert, dass jede Nachricht exakt einmal und in der richtigen Reihenfolge ankommt.

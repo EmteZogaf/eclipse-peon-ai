@@ -51,6 +51,7 @@ public class ChatMarkdownWidget extends Composite {
     private final IEclipseContext context;
 
     private volatile boolean browserReady = false;
+    private final java.util.Queue<String> pendingMessages = new java.util.concurrent.ConcurrentLinkedQueue<>();
     private volatile String currentTheme = "light";
 
     public ChatMarkdownWidget(Composite parent, int style, IEclipseContext context) {
@@ -69,7 +70,13 @@ public class ChatMarkdownWidget extends Composite {
             @Override
             public void changed(TitleEvent event) {
                 if ("javaReady".equals(event.title)) {
-                    EclipseUtil.runInUiThread(parent, () -> browserReady = true);
+                    EclipseUtil.runInUiThread(parent, () -> {
+                        browserReady = true;
+                        String json;
+                        while ((json = pendingMessages.poll()) != null) {
+                            browser.execute("window.dispatchEvent(new MessageEvent('message', {data: " + json + "}));");
+                        }
+                    });
                 }
             }
         });
@@ -151,10 +158,13 @@ public class ChatMarkdownWidget extends Composite {
 
     /** Send JSON payload to the browser via MessageEvent — identical to test harness approach. */
     private void postMessage(Map<String, Object> payload) {
-        if (!browserReady) return;
         try {
             String json = mapper.writeValueAsString(payload);
-            browser.execute("window.dispatchEvent(new MessageEvent('message', {data: " + json + "}));");
+            if (browserReady) {
+                browser.execute("window.dispatchEvent(new MessageEvent('message', {data: " + json + "}));");
+            } else {
+                pendingMessages.add(json);
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -242,6 +252,7 @@ public class ChatMarkdownWidget extends Composite {
 
     public void clear() {
         this.browserReady = false;
+        this.pendingMessages.clear();
         browser.setText(loadChatHtml());
         currentTheme = EclipseUiUtil.resolveTheme(context);
         postMessage(Map.of("type", "setTheme", "theme", currentTheme));
