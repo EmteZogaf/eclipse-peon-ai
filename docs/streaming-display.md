@@ -120,3 +120,10 @@ Both expose `getPartialAiMessage()` (thinking + text) so the caller can append i
 - **Tag:** core (verify `StreamingBridge` accumulators; verify dedicated exceptions thrown only when partial content exists)
 
 **Context:** Currently only the UI monitor sees partial chunks. On cancel/error, the already-streamed text is lost. Dedicated exceptions make the partial result first-class: clean abort paths, resume after rate-limit, and future "save partial on error" without monitor-hacks.
+
+### R14 — Diff wird genau einmal mit korrektem Theme gerendert ✅
+
+Ein Diff wird exakt einmal in den Chat eingefügt und verwendet das aktuelle Farbschema.
+
+- **GIVEN** a diff is provided **WHEN** `showDiff` is called **THEN** the diff is appended exactly once using the current theme
+- **Tag:** unit (verify `ChatMarkdownWidget.showDiff` calls `safeExecute` exactly once with theme parameter)

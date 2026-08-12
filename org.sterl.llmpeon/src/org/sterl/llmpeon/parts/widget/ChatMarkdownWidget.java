@@ -252,8 +252,6 @@ public class ChatMarkdownWidget extends Composite {
 
     public void showDiff(String unifiedDiff) {
         try {
-            safeExecute("appendDiff(" + mapper.writeValueAsString(unifiedDiff)
-                    + ");");
             safeExecute(
                 "appendDiff(" + mapper.writeValueAsString(unifiedDiff) + ", '" + currentTheme + "');"
             );
