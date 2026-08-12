@@ -7,6 +7,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -109,7 +110,10 @@ public class ChatMarkdownWidget extends Composite {
                             });
                     if (!EclipseUtil.searchWorkspaceFiles(fileName)
                             .isPresent()) {
-                        postMessage(Map.of("role", "PROBLEM", "message", "File not found: " + fileName));
+                        var payload = new LinkedHashMap<String, Object>();
+                        payload.put("role", "PROBLEM");
+                        payload.put("message", "File not found: " + fileName);
+                        postMessage(payload);
                     }
                 }
             }
@@ -179,11 +183,16 @@ public class ChatMarkdownWidget extends Composite {
     }
 
     public void appendMessage(SimpleMessage msg) {
-        postMessage(Map.of("role", msg.role(), "message", msg.message()));
+        var payload = new LinkedHashMap<String, Object>();
+        payload.put("role", msg.role());
+        payload.put("message", msg.message());
+        postMessage(payload);
     }
 
     public void hideLiveStatus() {
-        postMessage(Map.of("type", "hideLiveStatus"));
+        var payload = new LinkedHashMap<String, Object>();
+        payload.put("type", "hideLiveStatus");
+        postMessage(payload);
     }
 
     public void onStreamingChunk(OnPartialAiResponse r) {
@@ -238,16 +247,22 @@ public class ChatMarkdownWidget extends Composite {
     }
 
     public void updateLiveResponseInUIThread(String state, double tokPerSec, String safeChunk) {
-        EclipseUtil.runInUiThread(parent, () -> postMessage(Map.of(
-                "type", "updateLiveResponse",
-                "state", state,
-                "tokPerSec", tokPerSec,
-                "chunk", safeChunk
-        )));
+        EclipseUtil.runInUiThread(parent, () -> {
+            var payload = new LinkedHashMap<String, Object>();
+            payload.put("type", "updateLiveResponse");
+            payload.put("state", state);
+            payload.put("tokPerSec", tokPerSec);
+            payload.put("chunk", safeChunk);
+            postMessage(payload);
+        });
     }
 
     public void showDiff(String unifiedDiff) {
-        postMessage(Map.of("type", "appendDiff", "diff", unifiedDiff, "colorScheme", currentTheme));
+        var payload = new LinkedHashMap<String, Object>();
+        payload.put("type", "appendDiff");
+        payload.put("diff", unifiedDiff);
+        payload.put("colorScheme", currentTheme);
+        postMessage(payload);
     }
 
     public void clear() {
@@ -255,7 +270,10 @@ public class ChatMarkdownWidget extends Composite {
         this.pendingMessages.clear();
         browser.setText(loadChatHtml());
         currentTheme = EclipseUiUtil.resolveTheme(context);
-        postMessage(Map.of("type", "setTheme", "theme", currentTheme));
+        var payload = new LinkedHashMap<String, Object>();
+        payload.put("type", "setTheme");
+        payload.put("theme", currentTheme);
+        postMessage(payload);
     }
 
     public void appendMessage(ChatMessage msg) {
