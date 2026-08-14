@@ -7,8 +7,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.core.resources.IFile;
@@ -27,6 +25,9 @@ import org.sterl.llmpeon.parts.shared.EclipseUiUtil;
 import org.sterl.llmpeon.parts.shared.EclipseUtil;
 import org.sterl.llmpeon.shared.OnPartialAiResponse;
 import org.sterl.llmpeon.shared.OnPartialAiResponse.Type;
+import org.sterl.llmpeon.parts.widget.model.HideLiveStatusCommand;
+import org.sterl.llmpeon.parts.widget.model.LiveStatusCommand;
+import org.sterl.llmpeon.parts.widget.model.SetThemeCommand;
 import org.sterl.llmpeon.tool.model.SimpleMessage;
 import org.sterl.llmpeon.tool.model.ToSimpleMessage;
 
@@ -107,10 +108,7 @@ public class ChatMarkdownWidget extends Composite {
                             });
                     if (!EclipseUtil.searchWorkspaceFiles(fileName)
                             .isPresent()) {
-                        var payload = new LinkedHashMap<String, Object>();
-                        payload.put("role", "PROBLEM");
-                        payload.put("message", "File not found: " + fileName);
-                        postMessage(payload);
+                        postMessage(new SimpleMessage(SimpleMessage.Type.PROBLEM, "File not found: " + fileName));
                     }
                 }
             }
@@ -123,11 +121,7 @@ public class ChatMarkdownWidget extends Composite {
 
         EclipseUiUtil.addThemeChangeListener(theme -> {
             currentTheme = theme;
-
-            var payload = new LinkedHashMap<String, Object>();
-            payload.put("type", "setTheme");
-            payload.put("theme", theme);
-            postMessage(payload);
+            postMessage("light".equals(theme) ? SetThemeCommand.LIGHT : SetThemeCommand.DARK);
         });
 
         clear();
@@ -167,7 +161,7 @@ public class ChatMarkdownWidget extends Composite {
     }
 
     /** Send JSON payload to the browser via MessageEvent — identical to test harness approach. */
-    private void postMessage(Map<String, Object> payload) {
+    private void postMessage(Object payload) {
         try {
             String json = mapper.writeValueAsString(payload);
             if (browserReady) {
@@ -189,16 +183,11 @@ public class ChatMarkdownWidget extends Composite {
     }
 
     public void appendMessage(SimpleMessage msg) {
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("role", msg.role());
-        payload.put("message", msg.message());
-        postMessage(payload);
+        postMessage(msg);
     }
 
     public void hideLiveStatus() {
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("type", "hideLiveStatus");
-        postMessage(payload);
+        postMessage(HideLiveStatusCommand.INSTANCE);
     }
 
     public void onStreamingChunk(OnPartialAiResponse r) {
@@ -254,20 +243,12 @@ public class ChatMarkdownWidget extends Composite {
 
     public void updateLiveResponseInUIThread(String state, double tokPerSec, String safeChunk) {
         EclipseUtil.runInUiThread(parent, () -> {
-            var payload = new LinkedHashMap<String, Object>();
-            payload.put("type", "updateLiveResponse");
-            payload.put("state", state);
-            payload.put("tokPerSec", tokPerSec);
-            payload.put("chunk", safeChunk);
-            postMessage(payload);
+            postMessage(new LiveStatusCommand(state, tokPerSec, safeChunk));
         });
     }
 
     public void showDiff(String unifiedDiff) {
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("type", "appendDiff");
-        payload.put("diff", unifiedDiff);
-        postMessage(payload);
+        postMessage(new SimpleMessage(SimpleMessage.Type.DIFF, unifiedDiff));
     }
 
     public void clear() {
@@ -275,10 +256,7 @@ public class ChatMarkdownWidget extends Composite {
         this.pendingMessages.clear();
         browser.setText(loadChatHtml());
         currentTheme = EclipseUiUtil.resolveTheme();
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("type", "setTheme");
-        payload.put("theme", currentTheme);
-        postMessage(payload);
+        postMessage("light".equals(currentTheme) ? SetThemeCommand.LIGHT : SetThemeCommand.DARK);
     }
 
     public void appendMessage(ChatMessage msg) {

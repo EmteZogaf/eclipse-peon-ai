@@ -12,7 +12,7 @@ import org.sterl.llmpeon.parts.shared.JdtUtil;
 import org.sterl.llmpeon.parts.tools.EclipseWorkspaceReadFileTool;
 import org.sterl.llmpeon.parts.tools.EclipseWorkspaceWriteFileTool;
 
-public class EclipseWorkspaceWriteFileToolTest extends AbstractTest {
+public class EclipseWorkspaceWriteFileToolTest extends AbstractIntegrationTest {
 
     private final EclipseWorkspaceReadFileTool readTool = new EclipseWorkspaceReadFileTool();
     EclipseWorkspaceWriteFileTool tool = new EclipseWorkspaceWriteFileTool();

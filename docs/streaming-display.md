@@ -130,6 +130,15 @@ Ein Diff wird exakt einmal in den Chat eingefügt und verwendet das aktuelle Far
 
 ### R15 — UI Message Bridge aligned with Test Harness (postMessage) ✅
 
+Java und Test Harness verwenden identische `postMessage`-Verdrahtung. Content und Steuerimpulse sind strikt getrennt:
+- **Chat-Content:** wird als `SimpleMessage` (`role` + `message`) direkt durchgereicht. `chat.html` rendert diese standardmäßig.
+- **Steuerimpulse:** werden als dedizierte, typsichere Java-Klassen (`UiCommand`-Hierarchie) serialisiert. Jede Klasse repräsentiert exakt ein Kommando (z. B. `SetThemeCommand`, `HideLiveStatusCommand`).
+
+- **GIVEN** a chat message needs to be sent **WHEN** Java calls the widget **THEN** it posts a `SimpleMessage` JSON payload
+- **GIVEN** a UI control signal is needed **WHEN** Java calls the widget **THEN** it posts a typed `UiCommand` JSON payload (e.g., `SetThemeCommand`)
+- **GIVEN** a `SetThemeCommand` is used **WHEN** the theme needs to change **THEN** one of two static instances (`LIGHT`, `DARK`) is sent (private constructor, enum-like)
+- **Tag:** integration (verify test-chat.html covers all `UiCommand` types Java sends)
+
 Java und Test Harness verwenden identische `postMessage`-Verdrahtung für alle UI-Kommunikation.
 
 - **GIVEN** a message or diff needs to be sent to the UI **WHEN** Java calls the widget **THEN** it uses `browser.postMessage()` (via MessageEvent dispatch) with a JSON payload, identical to the test harness approach

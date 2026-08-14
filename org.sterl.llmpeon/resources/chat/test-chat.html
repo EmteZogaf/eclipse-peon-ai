@@ -90,6 +90,7 @@
         <h3>Controls</h3>
         <button class="test-btn" onclick="testSetTheme('dark')">Set Dark Theme</button>
         <button class="test-btn" onclick="testSetTheme('light')">Set Light Theme</button>
+        <button class="test-btn" onclick="hideLiveStatusBtn()">Hide Live Status</button>
         <button class="test-btn" onclick="clearAll()">Clear All</button>
 
         <div class="info">
@@ -172,11 +173,15 @@
             diff += '+            .filter(u -> !u.startsWith("deleted:"))\n';
             diff += '+            .collect(Collectors.toList());\n';
             diff += '     }\n';
-            send({type: 'appendDiff', diff: diff});
+            send({role: 'DIFF', message: diff});
         }
 
         function testSetTheme(theme) {
             send({type: 'setTheme', theme: theme});
+        }
+
+        function hideLiveStatusBtn() {
+            send({type: 'hideLiveStatus'});
         }
 
         function clearAll() {

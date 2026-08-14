@@ -495,13 +495,10 @@
         }
 
         // postMessage handler for Java host and test harness
+        // Commands (type) are checked first — they have higher priority than messages (role)
         window.addEventListener("message", function(event) {
             if (!event.data) return;
-            // Java sends SimpleMessage directly (no type field) or typed commands
-            if (event.data.role) {
-                // SimpleMessage: {role: "AI", message: "..."}
-                appendMessage(event.data);
-            } else if (event.data.type) {
+            if (event.data.type) {
                 switch (event.data.type) {
                     case "updateLiveResponse":
                         updateLiveResponse(event.data.state, event.data.tokPerSec, event.data.chunk);
@@ -509,15 +506,18 @@
                     case "hideLiveStatus":
                         hideLiveStatus();
                         break;
-                    case "appendDiff":
-                        appendDiff(event.data.diff);
-                        break;
                     case "clearMessages":
                         clearMessages();
                         break;
                     case "setTheme":
                         setTheme(event.data.theme);
                         break;
+                }
+            } else if (event.data.role) {
+                if (event.data.role === 'DIFF') {
+                    appendDiff(event.data.message);
+                } else {
+                    appendMessage(event.data);
                 }
             }
         });

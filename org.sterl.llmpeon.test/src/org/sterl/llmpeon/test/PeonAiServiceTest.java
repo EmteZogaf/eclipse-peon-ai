@@ -34,7 +34,7 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 
-public class PeonAiServiceTest extends AbstractTest {
+public class PeonAiServiceTest extends AbstractIntegrationTest {
 
     PeonAiService aiService = new PeonAiService(null, null, null, null);
     
