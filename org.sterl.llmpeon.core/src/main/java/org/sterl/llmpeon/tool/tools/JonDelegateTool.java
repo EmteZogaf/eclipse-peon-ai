@@ -93,8 +93,9 @@ public class JonDelegateTool extends AbstractTool {
     }
     
     @Tool("Compact the session of Peon-Plan (Da Thinka), e.g. before creating a new plan - if the old context still matters.")
-    public void compactPlan() {
-        plan.agent().compressContext(monitor);
+    public String compactPlan() {
+        return plan.agent().compressContext(monitor).aiMessage().text()
+                + System.lineSeparator() + contextUsed(plan.agent());
     }
 
     @Tool(name = JonDelegateTool.PLAN_WITH_PLAN_AGENT, value = "Have your Peon-Plan team member (Da Thinka) write/refine the plan into "
@@ -137,8 +138,9 @@ public class JonDelegateTool extends AbstractTool {
     }
     
     @Tool("Compact the session of Peon-Dev (Da Mek), e.g. before implementing a new plan - if the old context still matters.")
-    public void compactDev() {
-        dev.agent().compressContext(monitor);
+    public String compactDev() {
+        return dev.agent().compressContext(monitor).aiMessage().text()
+                + System.lineSeparator() + contextUsed(dev.agent());
     }
 
     /**
