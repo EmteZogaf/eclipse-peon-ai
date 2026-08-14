@@ -139,7 +139,6 @@ public abstract class AbstractAgent implements AiAgent {
         return messageQueue.add(msg);
     }
 
-
     public int tokenContextUsedInPercent() {
         float used = memory.getTotalTokenUsed();
         if (used < 100) return 0;
@@ -227,7 +226,7 @@ public abstract class AbstractAgent implements AiAgent {
         monitor.onCallStart(message);
         // auto compress if we are close to full before we start (slaves trigger earlier via compactFactor;
         if (compactAfterTokens() < memory.getTotalTokenUsed()) {
-            monitor.onTool("Auto Compact before execution, context to full " + compactAfterTokens() + "/" + memory.getTotalTokenUsed());
+            monitor.onTool("Auto compact context to full " + tokenContextUsedInPercent() + "%");
             compressContext(monitor);
         }
 

@@ -33,7 +33,7 @@ public class EclipseWorkspaceReadFileToolTest extends AbstractTest {
         
         // THEN
         assertContains(content, getClass().getSimpleName() + ".java");
-        assertContains(content, "30");
+        assertContains(content, "31");
     }
 
     @Test

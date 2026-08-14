@@ -21,6 +21,8 @@ public interface AiAgent {
 
     ThreadSafeMemory getMemory();
     
+    int tokenContextUsedInPercent();
+    
     /**
      * Clear the current state
      */
